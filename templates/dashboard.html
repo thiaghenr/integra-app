@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Início — Integra{% endblock %}
+{% block page_title %}Início{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-value">{{ today_appointments | length }}</div>
+    <div class="stat-label">Agendamentos Hoje</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ total_patients }}</div>
+    <div class="stat-label">Pacientes Ativos</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ total_professionals }}</div>
+    <div class="stat-label">Profissionais</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ status_counts.get('scheduled', 0) }}</div>
+    <div class="stat-label">Agendados (total)</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Agendamentos de Hoje</div>
+    <a href="/appointments/new" class="btn btn-primary btn-sm">+ Novo</a>
+  </div>
+
+  {% if today_appointments %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Horário</th>
+          <th>Paciente</th>
+          <th>Profissional</th>
+          <th>Duração</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in today_appointments %}
+        <tr>
+          <td>{{ appt.scheduled_at.strftime('%H:%M') }}</td>
+          <td><a href="/patients/{{ appt.patient_id }}">Paciente #{{ appt.patient_id }}</a></td>
+          <td>Prof. #{{ appt.professional_id }}</td>
+          <td>{{ appt.duration_minutes }} min</td>
+          <td><span class="badge badge-{{ appt.status.value }}">{{ appt.status.value | status_pt }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Nenhum agendamento para hoje.</p>
+    <a href="/appointments/new" class="btn btn-primary">Agendar Consulta</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

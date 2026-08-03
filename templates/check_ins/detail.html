@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Check-in — Integra{% endblock %}
+{% block page_title %}Check-in{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Check-in</h2>
+  <a href="/check-ins" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      {% if patient %}
+      <div class="form-group">
+        <label>Paciente</label>
+        <p>{{ patient.full_name }}</p>
+      </div>
+      {% endif %}
+      <div class="form-group">
+        <label>Intensidade</label>
+        <p>{{ check_in.intensity }}/10</p>
+      </div>
+      <div class="form-group">
+        <label>Data/Hora</label>
+        <p>{{ check_in.checked_in_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>Emoções</label>
+        <p>{{ emotions | join(', ') if emotions else '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Sinais Corporais</label>
+        <p>{{ body_signals | join(', ') if body_signals else '—' }}</p>
+      </div>
+    </div>
+  </div>
+  {% if check_in.notes %}
+  <div class="form-group" style="margin-top:8px;">
+    <label>Observações</label>
+    <p style="white-space:pre-line;">{{ check_in.notes }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

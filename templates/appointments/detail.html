@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Agendamento — Integra{% endblock %}
+{% block page_title %}Agendamento{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Agendamento #{{ appointment.id }}</h2>
+  <div style="display:flex;gap:8px;">
+    {% if user.role.value in ['admin', 'receptionist'] %}
+    <a href="/appointments/{{ appointment.id }}/edit" class="btn btn-secondary">Editar</a>
+    {% if appointment.status.value not in ['cancelled', 'completed'] %}
+    <form method="post" action="/appointments/{{ appointment.id }}/cancel" data-confirm="Cancelar este agendamento?">
+      <button type="submit" class="btn btn-danger">Cancelar Agendamento</button>
+    </form>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      <div class="form-group">
+        <label>Paciente</label>
+        <p><a href="/patients/{{ appointment.patient_id }}">{{ patient.full_name if patient else '#' + appointment.patient_id|string }}</a></p>
+      </div>
+      <div class="form-group">
+        <label>Profissional</label>
+        <p>{{ professional.full_name if professional else '#' + appointment.professional_id|string }}</p>
+      </div>
+      <div class="form-group">
+        <label>Especialização</label>
+        <p>{{ professional.specialization if professional else '—' }}</p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>Data e Hora</label>
+        <p>{{ appointment.scheduled_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+      </div>
+      <div class="form-group">
+        <label>Duração</label>
+        <p>{{ appointment.duration_minutes }} minutos</p>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <p><span class="badge badge-{{ appointment.status.value }}">{{ appointment.status.value | status_pt }}</span></p>
+      </div>
+    </div>
+  </div>
+  {% if appointment.notes %}
+  <div class="form-group" style="margin-top:8px;">
+    <label>Observações</label>
+    <p style="white-space:pre-line;">{{ appointment.notes }}</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if user.role.value in ['admin', 'professional'] %}
+<div style="margin-top:8px;">
+  <a href="/medical-records/new?patient_id={{ appointment.patient_id }}" class="btn btn-secondary">+ Prontuário deste Paciente</a>
+</div>
+{% endif %}
+{% endblock %}

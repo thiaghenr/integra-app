@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Prontuários — Integra{% endblock %}
+{% block page_title %}Prontuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Prontuários</h2>
+  <a href="/medical-records/new" class="btn btn-primary">+ Novo Prontuário</a>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Paciente</th>
+        <th>Profissional</th>
+        <th>Título</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td>{{ r.record_date.strftime('%d/%m/%Y') }}</td>
+        <td>
+          {% if patient_map.get(r.patient_id) %}
+            <a href="/patients/{{ r.patient_id }}">{{ patient_map[r.patient_id].full_name }}</a>
+          {% else %}#{{ r.patient_id }}{% endif %}
+        </td>
+        <td>{% if prof_map.get(r.professional_id) %}{{ prof_map[r.professional_id].full_name }}{% else %}#{{ r.professional_id }}{% endif %}</td>
+        <td>{{ r.title }}</td>
+        <td class="actions">
+          <a href="/medical-records/{{ r.id }}" class="btn btn-secondary btn-sm">Ver</a>
+          <a href="/medical-records/{{ r.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Nenhum prontuário encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

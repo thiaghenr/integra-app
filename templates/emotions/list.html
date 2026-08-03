@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Emoções — Integra{% endblock %}
+{% block page_title %}Emoções{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Emoções</h2>
+  <a href="/emotions/new" class="btn btn-primary">+ Nova Emoção</a>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in emotions %}
+      <tr>
+        <td>{{ e.name }}</td>
+        <td>
+          {% if e.is_active %}
+            <span class="badge badge-active">Ativa</span>
+          {% else %}
+            <span class="badge badge-inactive">Inativa</span>
+          {% endif %}
+        </td>
+        <td class="actions">
+          {% if e.is_active %}
+          <form method="post" action="/emotions/{{ e.id }}/delete" data-confirm="Arquivar esta emoção?">
+            <button type="submit" class="btn btn-danger btn-sm">Arquivar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px;">Nenhuma emoção cadastrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

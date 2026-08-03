@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Prontuário — Integra{% endblock %}
+{% block page_title %}Prontuário{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>{{ record.title }}</h2>
+  <a href="/medical-records/{{ record.id }}/edit" class="btn btn-secondary">Editar</a>
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div>
+      <div class="form-group">
+        <label>Paciente</label>
+        <p><a href="/patients/{{ record.patient_id }}">{{ patient.full_name if patient else '#' + record.patient_id|string }}</a></p>
+      </div>
+      <div class="form-group">
+        <label>Profissional</label>
+        <p>{{ professional.full_name if professional else '#' + record.professional_id|string }}</p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>Data do Prontuário</label>
+        <p>{{ record.record_date.strftime('%d/%m/%Y %H:%M') }}</p>
+      </div>
+      {% if record.appointment_id %}
+      <div class="form-group">
+        <label>Consulta Vinculada</label>
+        <p><a href="/appointments/{{ record.appointment_id }}">#{{ record.appointment_id }}</a></p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Notas Clínicas</label>
+    <div style="white-space:pre-line;background:var(--sidebar);padding:16px;border-radius:var(--radius);font-size:13px;line-height:1.7;">{{ record.content }}</div>
+  </div>
+</div>
+{% endblock %}

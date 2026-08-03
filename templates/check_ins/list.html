@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Check-in — Integra{% endblock %}
+{% block page_title %}Check-in{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Check-in</h2>
+  {% if user.role.value == 'paciente' %}
+  <a href="/check-ins/new" class="btn btn-primary">+ Novo Check-in</a>
+  {% endif %}
+</div>
+
+{% if user.role.value == 'superadmin' and creatable_patients %}
+<form method="get" action="/check-ins/new" class="search-bar">
+  <select name="patient_id" class="form-control" required>
+    <option value="">Selecione o paciente…</option>
+    {% for p in creatable_patients %}
+    <option value="{{ p.id }}">{{ p.full_name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">+ Novo Check-in</button>
+</form>
+{% endif %}
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        {% if user.role.value in ['superadmin', 'admin'] %}
+        <th>Paciente</th>
+        {% endif %}
+        <th>Intensidade</th>
+        <th>Emoções</th>
+        <th>Sinais Corporais</th>
+        <th>Observações</th>
+        <th>Data/Hora</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in check_ins %}
+      <tr>
+        {% if user.role.value in ['superadmin', 'admin'] %}
+        <td>{{ patients_by_id[c.patient_id].full_name if c.patient_id in patients_by_id else '—' }}</td>
+        {% endif %}
+        <td>{{ c.intensity }}/10</td>
+        <td>{{ emotions_by_check_in.get(c.id) | join(', ') if emotions_by_check_in.get(c.id) else '—' }}</td>
+        <td>{{ body_signals_by_check_in.get(c.id) | join(', ') if body_signals_by_check_in.get(c.id) else '—' }}</td>
+        <td>{{ c.notes or '—' }}</td>
+        <td>{{ c.checked_in_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td class="actions"><a href="/check-ins/{{ c.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="{{ 7 if user.role.value in ['superadmin', 'admin'] else 6 }}" style="text-align:center;color:var(--muted);padding:24px;">Nenhum check-in encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Familiares — Integra{% endblock %}
+{% block page_title %}Familiares{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Familiares</h2>
+  {% if user.role.value in ['superadmin', 'admin', 'receptionist'] %}
+  <a href="/family-members/new" class="btn btn-primary">+ Novo Familiar</a>
+  {% endif %}
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Parentesco</th>
+        <th>Paciente</th>
+        <th>Telefone</th>
+        <th>E-mail</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in family_members %}
+      <tr>
+        <td>{{ f.name }}</td>
+        <td>{{ f.relationship }}</td>
+        <td>{{ patients_by_id[f.patient_id].full_name if f.patient_id in patients_by_id else '—' }}</td>
+        <td>{{ f.phone or '—' }}</td>
+        <td>{{ f.email or '—' }}</td>
+        <td class="actions">
+          {% if user.role.value in ['superadmin', 'admin', 'receptionist'] %}
+          <a href="/family-members/{{ f.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+          <form method="post" action="/family-members/{{ f.id }}/delete" data-confirm="Arquivar este familiar?">
+            <button type="submit" class="btn btn-danger btn-sm">Arquivar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhum familiar encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

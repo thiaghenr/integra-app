@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Integra{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-name">Integra</span>
+        <span class="brand-tag">Clínica</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-link {% if request.url.path == '/dashboard' %}active{% endif %}">
+          <span class="nav-icon">⬛</span> Início
+        </a>
+        <a href="/appointments" class="nav-link {% if '/appointments' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">📅</span> Agendamentos
+        </a>
+        <a href="/patients" class="nav-link {% if '/patients' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">👤</span> Pacientes
+        </a>
+        <a href="/family-members" class="nav-link {% if '/family-members' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">👪</span> Familiares
+        </a>
+        {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+        <a href="/medical-records" class="nav-link {% if '/medical-records' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">📋</span> Prontuários
+        </a>
+        {% endif %}
+        <a href="/professionals" class="nav-link {% if '/professionals' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🩺</span> Profissionais
+        </a>
+        {% if user.role.value in ['superadmin', 'admin'] %}
+        <a href="/users" class="nav-link {% if '/users' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">👥</span> Usuários
+        </a>
+        {% endif %}
+        {% if user.role.value in ['superadmin', 'admin', 'paciente'] %}
+        <a href="/check-ins" class="nav-link {% if '/check-ins' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">💬</span> Check-in
+        </a>
+        {% endif %}
+        {% if user.role.value in ['superadmin', 'admin'] %}
+        <a href="/emotions" class="nav-link {% if '/emotions' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🎭</span> Emoções
+        </a>
+        <a href="/body-signals" class="nav-link {% if '/body-signals' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🫀</span> Sinais Corporais
+        </a>
+        {% endif %}
+        {% if user.role.value == 'superadmin' %}
+        <a href="/clinics" class="nav-link {% if '/clinics' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🏥</span> Clínicas
+        </a>
+        {% endif %}
+        {% if user.role.value in ['superadmin', 'admin'] %}
+        <a href="/settings/clinic" class="nav-link {% if '/settings' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">⚙️</span> Configurações
+        </a>
+        {% endif %}
+      </nav>
+      <div class="sidebar-footer">
+        <span class="sidebar-user-name">{{ user.full_name }}</span>
+        <span class="sidebar-user-role">{{ user.role.value | role_pt }}</span>
+        <a href="/logout" class="btn-logout">Sair</a>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+        </div>
+        <div class="top-bar-right">
+          <span class="clinic-name">Integra Clínica</span>
+        </div>
+      </header>
+
+      <main class="content">
+        {% if flash_message %}
+        <div class="flash flash-{{ flash_type | default('success') }}" id="flashMessage">
+          {{ flash_message }}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script src="/static/js/main.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

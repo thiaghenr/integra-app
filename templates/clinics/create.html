@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Nova Clínica — Integra{% endblock %}
+{% block page_title %}Nova Clínica{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/clinics/new">
+    <div class="form-group">
+      <label for="name">Nome da Clínica <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="name" name="name" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label for="slug">Slug <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="slug" name="slug" class="form-control" required
+             pattern="[a-z0-9\-]+" title="Apenas letras minúsculas, números e hifens"
+             placeholder="ex.: clinica-centro-norte" />
+      <span class="form-error">Usado nas URLs — somente minúsculas e hifens.</span>
+    </div>
+    <div class="form-group">
+      <label for="phone">Telefone</label>
+      <input type="tel" id="phone" name="phone" class="form-control" />
+    </div>
+    <div class="form-group">
+      <label for="address">Endereço</label>
+      <input type="text" id="address" name="address" class="form-control" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Criar Clínica</button>
+      <a href="/clinics" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

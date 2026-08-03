@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Editar Familiar — Integra{% endblock %}
+{% block page_title %}Editar Familiar{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/family-members/{{ family_member.id }}/edit">
+    <div class="form-group">
+      <label>Paciente</label>
+      <p>{{ patient.full_name if patient else '—' }}</p>
+    </div>
+    <div class="form-group">
+      <label for="name">Nome <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="name" name="name" class="form-control" value="{{ family_member.name }}" required />
+    </div>
+    <div class="form-group">
+      <label for="relationship">Parentesco <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="relationship" name="relationship" class="form-control" value="{{ family_member.relationship }}" required />
+    </div>
+    <div class="form-group">
+      <label for="phone">Telefone</label>
+      <input type="tel" id="phone" name="phone" class="form-control" value="{{ family_member.phone or '' }}" />
+    </div>
+    <div class="form-group">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" name="email" class="form-control" value="{{ family_member.email or '' }}" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+      <a href="/family-members" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

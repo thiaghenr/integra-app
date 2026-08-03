@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Profissionais — Integra{% endblock %}
+{% block page_title %}Profissionais{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Todos os Profissionais</h2>
+  {% if user.role.value in ['superadmin', 'admin'] %}
+  <a href="/professionals/new" class="btn btn-primary">+ Novo Profissional</a>
+  {% endif %}
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Especialização</th>
+        <th>Registro</th>
+        <th>Telefone</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in professionals %}
+      <tr>
+        <td><a href="/professionals/{{ p.id }}">{{ p.full_name }}</a></td>
+        <td>{{ p.specialization }}</td>
+        <td>{{ p.registration or '—' }}</td>
+        <td>{{ p.phone or '—' }}</td>
+        <td>
+          {% if p.is_active %}
+            <span class="badge badge-active">Ativo</span>
+          {% else %}
+            <span class="badge badge-inactive">Inativo</span>
+          {% endif %}
+        </td>
+        <td class="actions">
+          {% if user.role.value in ['superadmin', 'admin'] %}
+          <a href="/professionals/{{ p.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+          <form method="post" action="/professionals/{{ p.id }}/delete" data-confirm="Desativar este profissional?">
+            <button type="submit" class="btn btn-danger btn-sm">Desativar</button>
+          </form>
+          {% else %}
+          <a href="/professionals/{{ p.id }}" class="btn btn-secondary btn-sm">Ver</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhum profissional encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

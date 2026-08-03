@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Nova Emoção — Integra{% endblock %}
+{% block page_title %}Nova Emoção{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/emotions/new">
+    <div class="form-group">
+      <label for="name">Nome <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="name" name="name" class="form-control" required placeholder="ex.: Feliz, Ansioso, Calmo" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Cadastrar Emoção</button>
+      <a href="/emotions" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

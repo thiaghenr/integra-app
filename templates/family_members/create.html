@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Novo Familiar — Integra{% endblock %}
+{% block page_title %}Novo Familiar{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/family-members/new">
+    <div class="form-group">
+      <label for="patient_id">Paciente <span style="color:var(--danger)">*</span></label>
+      <select id="patient_id" name="patient_id" class="form-control" required>
+        <option value="">Selecione o paciente…</option>
+        {% for p in patients %}
+        <option value="{{ p.id }}">{{ p.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="name">Nome <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="name" name="name" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label for="relationship">Parentesco <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="relationship" name="relationship" class="form-control" required placeholder="ex.: Mãe, Pai, Responsável Legal" />
+    </div>
+    <div class="form-group">
+      <label for="phone">Telefone</label>
+      <input type="tel" id="phone" name="phone" class="form-control" />
+    </div>
+    <div class="form-group">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" name="email" class="form-control" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Cadastrar Familiar</button>
+      <a href="/family-members" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

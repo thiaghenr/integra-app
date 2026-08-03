@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Clínicas — Integra{% endblock %}
+{% block page_title %}Clínicas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Todas as Clínicas</h2>
+  <a href="/clinics/new" class="btn btn-primary">+ Nova Clínica</a>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Slug</th>
+        <th>Telefone</th>
+        <th>Endereço</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clinics %}
+      <tr>
+        <td><strong>{{ c.name }}</strong></td>
+        <td><code>{{ c.slug }}</code></td>
+        <td>{{ c.phone or '—' }}</td>
+        <td>{{ c.address or '—' }}</td>
+        <td>
+          {% if c.is_active %}
+            <span class="badge badge-active">Ativo</span>
+          {% else %}
+            <span class="badge badge-inactive">Inativo</span>
+          {% endif %}
+        </td>
+        <td class="actions">
+          <a href="/clinics/{{ c.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhuma clínica encontrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

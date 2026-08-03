@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.full_name }} — Integra{% endblock %}
+{% block page_title %}Paciente{% endblock %}
+
+{% block content %}
+{% if generated_password %}
+<div class="alert alert-success">
+  Conta de usuário criada para {{ patient.email }}. Senha temporária (anote agora, não será exibida novamente):
+  <strong>{{ generated_password }}</strong>. Uma troca de senha será exigida no primeiro login.
+</div>
+{% endif %}
+<div class="page-header">
+  <h2>{{ patient.full_name }}</h2>
+  <div style="display:flex;gap:8px;">
+    {% if user.role.value in ['admin', 'receptionist'] %}
+    <a href="/patients/{{ patient.id }}/edit" class="btn btn-secondary">Editar</a>
+    {% endif %}
+    {% if user.role.value in ['admin', 'receptionist'] %}
+    <a href="/appointments/new?patient_id={{ patient.id }}" class="btn btn-primary">+ Agendamento</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      <div class="form-group">
+        <label>CPF</label>
+        <p>{{ patient.cpf or '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Data de Nascimento</label>
+        <p>{{ patient.date_of_birth or '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <p>{{ patient.phone or '—' }}</p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <p>{{ patient.email or '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Endereço</label>
+        <p>{{ patient.address or '—' }}</p>
+      </div>
+    </div>
+  </div>
+  {% if patient.notes %}
+  <div class="form-group" style="margin-top:8px;">
+    <label>Observações</label>
+    <p style="white-space:pre-line;">{{ patient.notes }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Agendamentos ({{ appointments | length }})</div>
+    {% if user.role.value in ['admin', 'receptionist'] %}
+    <a href="/appointments/new" class="btn btn-primary btn-sm">+ Novo</a>
+    {% endif %}
+  </div>
+  {% if appointments %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Data/Hora</th><th>Profissional</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for a in appointments %}
+        <tr>
+          <td>{{ a.scheduled_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>Prof. #{{ a.professional_id }}</td>
+          <td><span class="badge badge-{{ a.status.value }}">{{ a.status.value | status_pt }}</span></td>
+          <td class="actions"><a href="/appointments/{{ a.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);">Nenhum agendamento ainda.</p>
+  {% endif %}
+</div>
+
+{% if user.role.value in ['superadmin', 'admin'] %}
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Check-ins ({{ check_ins | length }})</div>
+    {% if user.role.value == 'superadmin' %}
+    <a href="/check-ins/new?patient_id={{ patient.id }}" class="btn btn-primary btn-sm">+ Novo</a>
+    {% endif %}
+  </div>
+  {% if check_ins %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Intensidade</th><th>Emoções</th><th>Sinais Corporais</th><th>Observações</th><th>Data/Hora</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in check_ins %}
+        <tr>
+          <td>{{ c.intensity }}/10</td>
+          <td>{{ emotions_by_check_in.get(c.id) | join(', ') if emotions_by_check_in.get(c.id) else '—' }}</td>
+          <td>{{ body_signals_by_check_in.get(c.id) | join(', ') if body_signals_by_check_in.get(c.id) else '—' }}</td>
+          <td>{{ c.notes or '—' }}</td>
+          <td>{{ c.checked_in_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td class="actions"><a href="/check-ins/{{ c.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);">Nenhum check-in ainda.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if user.role.value in ['admin', 'professional'] %}
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Prontuários ({{ records | length }})</div>
+    <a href="/medical-records/new?patient_id={{ patient.id }}" class="btn btn-primary btn-sm">+ Novo</a>
+  </div>
+  {% if records %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Título</th><th>Profissional</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r.record_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ r.title }}</td>
+          <td>Prof. #{{ r.professional_id }}</td>
+          <td class="actions"><a href="/medical-records/{{ r.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);">Nenhum prontuário ainda.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Pacientes — Integra{% endblock %}
+{% block page_title %}Pacientes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Pacientes</h2>
+  {% if user.role.value in ['superadmin', 'admin', 'receptionist'] %}
+  <a href="/patients/new" class="btn btn-primary">+ Novo Paciente</a>
+  {% endif %}
+</div>
+
+<form method="get" action="/patients" class="search-bar">
+  <input type="search" name="search" class="form-control" placeholder="Buscar por nome ou CPF…" value="{{ search or '' }}" />
+  <button type="submit" class="btn btn-secondary">Buscar</button>
+  {% if search %}<a href="/patients" class="btn btn-secondary">Limpar</a>{% endif %}
+</form>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>CPF</th>
+        <th>Telefone</th>
+        <th>E-mail</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in patients %}
+      <tr>
+        <td><a href="/patients/{{ p.id }}">{{ p.full_name }}</a></td>
+        <td>{{ p.cpf or '—' }}</td>
+        <td>{{ p.phone or '—' }}</td>
+        <td>{{ p.email or '—' }}</td>
+        <td class="actions">
+          <a href="/patients/{{ p.id }}" class="btn btn-secondary btn-sm">Ver</a>
+          {% if user.role.value in ['superadmin', 'admin', 'receptionist'] %}
+          <a href="/patients/{{ p.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+          <form method="post" action="/patients/{{ p.id }}/delete" data-confirm="Arquivar este paciente?">
+            <button type="submit" class="btn btn-danger btn-sm">Arquivar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Nenhum paciente encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

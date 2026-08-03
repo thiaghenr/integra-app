@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Agendamentos — Integra{% endblock %}
+{% block page_title %}Agendamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Agendamentos</h2>
+  {% if user.role.value in ['admin', 'receptionist'] %}
+  <a href="/appointments/new" class="btn btn-primary">+ Novo Agendamento</a>
+  {% endif %}
+</div>
+
+<form method="get" action="/appointments" style="margin-bottom:16px;display:flex;gap:8px;align-items:center;">
+  <select name="professional_id" class="form-control" style="max-width:240px;" onchange="this.form.submit()">
+    <option value="">Todos os Profissionais</option>
+    {% for p in professionals %}
+    <option value="{{ p.id }}" {% if selected_professional_id == p.id %}selected{% endif %}>{{ p.full_name }}</option>
+    {% endfor %}
+  </select>
+  {% if selected_professional_id %}<a href="/appointments" class="btn btn-secondary btn-sm">Limpar</a>{% endif %}
+</form>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Data/Hora</th>
+        <th>Paciente</th>
+        <th>Profissional</th>
+        <th>Duração</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td>{{ a.scheduled_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>
+          {% if patient_map.get(a.patient_id) %}
+            <a href="/patients/{{ a.patient_id }}">{{ patient_map[a.patient_id].full_name }}</a>
+          {% else %}#{{ a.patient_id }}{% endif %}
+        </td>
+        <td>
+          {% if prof_map.get(a.professional_id) %}{{ prof_map[a.professional_id].full_name }}
+          {% else %}#{{ a.professional_id }}{% endif %}
+        </td>
+        <td>{{ a.duration_minutes }} min</td>
+        <td><span class="badge badge-{{ a.status.value }}">{{ a.status.value | status_pt }}</span></td>
+        <td class="actions">
+          <a href="/appointments/{{ a.id }}" class="btn btn-secondary btn-sm">Ver</a>
+          {% if user.role.value in ['admin', 'receptionist'] %}
+          <a href="/appointments/{{ a.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhum agendamento encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

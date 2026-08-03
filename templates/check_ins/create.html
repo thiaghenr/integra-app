@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Novo Check-in — Integra{% endblock %}
+{% block page_title %}Novo Check-in{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/check-ins/new">
+    {% if patient %}
+    <input type="hidden" name="patient_id" value="{{ patient.id }}" />
+    <div class="form-group">
+      <label>Paciente</label>
+      <p>{{ patient.full_name }}</p>
+    </div>
+    {% endif %}
+    <div class="form-group">
+      <label for="intensity">Intensidade (1–10) <span style="color:var(--danger)">*</span></label>
+      <select id="intensity" name="intensity" class="form-control" required>
+        <option value="">Selecione…</option>
+        {% for i in range(1, 11) %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if emotions %}
+    <div class="form-group">
+      <label>Emoções</label>
+      {% for e in emotions %}
+      <label style="display:block;font-weight:normal;margin-bottom:4px;">
+        <input type="checkbox" name="emotion_ids" value="{{ e.id }}" /> {{ e.name }}
+      </label>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if body_signals %}
+    <div class="form-group">
+      <label>Sinais Corporais</label>
+      {% for category, signals in body_signals | groupby('category') %}
+      <p style="font-weight:600;margin:12px 0 4px;">{{ category }}</p>
+      {% for b in signals %}
+      <label style="display:block;font-weight:normal;margin-bottom:4px;">
+        <input type="checkbox" name="body_signal_ids" value="{{ b.id }}" /> {{ b.name }}
+      </label>
+      {% endfor %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="form-group">
+      <label for="notes">Observações</label>
+      <textarea id="notes" name="notes" class="form-control" placeholder="Conte um pouco mais sobre como você está…"></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Registrar Check-in</button>
+      <a href="/check-ins" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

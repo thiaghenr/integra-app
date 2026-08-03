@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Novo Sinal Corporal — Integra{% endblock %}
+{% block page_title %}Novo Sinal Corporal{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/body-signals/new">
+    <div class="form-group">
+      <label for="category">Categoria <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="category" name="category" class="form-control" list="category-options" required placeholder="ex.: Fisiológicos, Musculares, Sensoriais" />
+      <datalist id="category-options">
+        {% for c in categories %}
+        <option value="{{ c }}"></option>
+        {% endfor %}
+      </datalist>
+    </div>
+    <div class="form-group">
+      <label for="name">Nome <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="name" name="name" class="form-control" required placeholder="ex.: Tontura, Tremor, Dor de cabeça" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Cadastrar Sinal Corporal</button>
+      <a href="/body-signals" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

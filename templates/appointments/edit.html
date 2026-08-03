@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Editar Agendamento — Integra{% endblock %}
+{% block page_title %}Editar Agendamento{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/appointments/{{ appointment.id }}/edit">
+    <div class="form-group">
+      <label for="patient_id">Paciente</label>
+      <select id="patient_id" name="patient_id" class="form-control" required>
+        {% for p in patients %}
+        <option value="{{ p.id }}" {% if p.id == appointment.patient_id %}selected{% endif %}>{{ p.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="professional_id">Profissional</label>
+      <select id="professional_id" name="professional_id" class="form-control" required>
+        {% for p in professionals %}
+        <option value="{{ p.id }}" {% if p.id == appointment.professional_id %}selected{% endif %}>{{ p.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="scheduled_at">Data e Hora</label>
+      <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="form-control"
+             value="{{ appointment.scheduled_at.strftime('%Y-%m-%dT%H:%M') }}" required />
+    </div>
+    <div class="form-group">
+      <label for="duration_minutes">Duração (minutos)</label>
+      <input type="number" id="duration_minutes" name="duration_minutes" class="form-control"
+             value="{{ appointment.duration_minutes }}" min="10" max="480" />
+    </div>
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status" name="status" class="form-control">
+        {% for s in statuses %}
+        <option value="{{ s.value }}" {% if s == appointment.status %}selected{% endif %}>{{ s.value | status_pt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="notes">Observações</label>
+      <textarea id="notes" name="notes" class="form-control">{{ appointment.notes or '' }}</textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+      <a href="/appointments/{{ appointment.id }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

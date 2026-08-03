@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ professional.full_name }} — Integra{% endblock %}
+{% block page_title %}Profissional{% endblock %}
+
+{% block content %}
+{% if generated_password %}
+<div class="alert alert-success">
+  Conta de usuário criada para {{ professional.email }}. Senha temporária (anote agora, não será exibida novamente):
+  <strong>{{ generated_password }}</strong>. Uma troca de senha será exigida no primeiro login.
+</div>
+{% endif %}
+<div class="page-header">
+  <h2>{{ professional.full_name }}</h2>
+  {% if user.role.value in ['superadmin', 'admin'] %}
+  <a href="/professionals/{{ professional.id }}/edit" class="btn btn-secondary">Editar</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      <div class="form-group">
+        <label>CPF</label>
+        <p>{{ professional.cpf or '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Especialização</label>
+        <p>{{ professional.specialization }}</p>
+      </div>
+      <div class="form-group">
+        <label>Registro</label>
+        <p>{{ professional.registration or '—' }}</p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>Telefone</label>
+        <p>{{ professional.phone or '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <p>{{ professional.email or '—' }}</p>
+      </div>
+    </div>
+  </div>
+  <div>
+    <label>Status</label>
+    <p>
+      {% if professional.is_active %}
+        <span class="badge badge-active">Ativo</span>
+      {% else %}
+        <span class="badge badge-inactive">Inativo</span>
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<div style="margin-top:16px;">
+  <a href="/appointments?professional_id={{ professional.id }}" class="btn btn-secondary">Ver Agendamentos</a>
+</div>
+{% endblock %}

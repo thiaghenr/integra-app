@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Novo Agendamento — Integra{% endblock %}
+{% block page_title %}Novo Agendamento{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/appointments/new">
+    <div class="form-group">
+      <label for="patient_id">Paciente <span style="color:var(--danger)">*</span></label>
+      <select id="patient_id" name="patient_id" class="form-control" required>
+        <option value="">Selecione o paciente…</option>
+        {% for p in patients %}
+        <option value="{{ p.id }}">{{ p.full_name }}{% if p.cpf %} — {{ p.cpf }}{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="professional_id">Profissional <span style="color:var(--danger)">*</span></label>
+      <select id="professional_id" name="professional_id" class="form-control" required>
+        <option value="">Selecione o profissional…</option>
+        {% for p in professionals %}
+        <option value="{{ p.id }}">{{ p.full_name }} — {{ p.specialization }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="scheduled_at">Data e Hora <span style="color:var(--danger)">*</span></label>
+      <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label for="duration_minutes">Duração (minutos)</label>
+      <input type="number" id="duration_minutes" name="duration_minutes" class="form-control" value="50" min="10" max="480" />
+    </div>
+    <div class="form-group">
+      <label for="notes">Observações</label>
+      <textarea id="notes" name="notes" class="form-control"></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Agendar Consulta</button>
+      <a href="/appointments" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

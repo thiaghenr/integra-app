@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Usuários — Integra{% endblock %}
+{% block page_title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Todos os Usuários</h2>
+  <a href="/users/new" class="btn btn-primary">+ Novo Usuário</a>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Função</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.full_name }}</td>
+        <td>{{ u.email }}</td>
+        <td><span class="badge badge-{{ u.role.value }}">{{ u.role.value | role_pt }}</span></td>
+        <td>
+          {% if u.is_active %}
+            <span class="badge badge-active">Ativo</span>
+          {% else %}
+            <span class="badge badge-inactive">Inativo</span>
+          {% endif %}
+        </td>
+        <td class="actions">
+          <a href="/users/{{ u.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
+          {% if u.id != user.id %}
+          <form method="post" action="/users/{{ u.id }}/delete" data-confirm="Desativar este usuário?">
+            <button type="submit" class="btn btn-danger btn-sm">Desativar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Nenhum usuário encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

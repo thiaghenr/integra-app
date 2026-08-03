@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Sinais Corporais — Integra{% endblock %}
+{% block page_title %}Sinais Corporais{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Sinais Corporais</h2>
+  <a href="/body-signals/new" class="btn btn-primary">+ Novo Sinal Corporal</a>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Categoria</th>
+        <th>Nome</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in body_signals %}
+      <tr>
+        <td>{{ b.category }}</td>
+        <td>{{ b.name }}</td>
+        <td>
+          {% if b.is_active %}
+            <span class="badge badge-active">Ativo</span>
+          {% else %}
+            <span class="badge badge-inactive">Inativo</span>
+          {% endif %}
+        </td>
+        <td class="actions">
+          {% if b.is_active %}
+          <form method="post" action="/body-signals/{{ b.id }}/delete" data-confirm="Arquivar este sinal corporal?">
+            <button type="submit" class="btn btn-danger btn-sm">Arquivar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">Nenhum sinal corporal cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
