@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Missões — Integra{% endblock %}
+{% block page_title %}Missões{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Missões</h2>
+  {% if user.role.value in ['superadmin', 'professional'] %}
+  <a href="/missions/new" class="btn btn-primary">+ Nova Missão</a>
+  {% endif %}
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Paciente</th>
+        <th>Profissional</th>
+        <th>Título</th>
+        <th>Status</th>
+        <th>Início</th>
+        <th>Fim</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in missions %}
+      <tr>
+        <td>
+          {% if patient_map.get(m.patient_id) %}
+            <a href="/patients/{{ m.patient_id }}">{{ patient_map[m.patient_id].full_name }}</a>
+          {% else %}#{{ m.patient_id }}{% endif %}
+        </td>
+        <td>{% if prof_map.get(m.professional_id) %}{{ prof_map[m.professional_id].full_name }}{% else %}#{{ m.professional_id }}{% endif %}</td>
+        <td>{{ m.title }}</td>
+        <td><span class="badge badge-{{ m.status.value }}">{{ m.status.value | status_pt }}</span></td>
+        <td>{{ m.start_date or '—' }}</td>
+        <td>{{ m.end_date or '—' }}</td>
+        <td class="actions">
+          <a href="/missions/{{ m.id }}" class="btn btn-secondary btn-sm">Ver</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">Nenhuma missão encontrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

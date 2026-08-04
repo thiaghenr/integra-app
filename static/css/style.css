@@ -175,6 +175,8 @@ textarea.form-control { min-height: 120px; resize: vertical; }
 .badge-confirmed  { background: #DCFCE7; color: #166534; }
 .badge-completed  { background: #EDE9FE; color: #5B21B6; }
 .badge-cancelled  { background: #F3F4F6; color: #6B7280; }
+.badge-pending     { background: #FEF3C7; color: #92400E; }
+.badge-in_progress { background: #DBEAFE; color: #1E40AF; }
 .badge-no_show    { background: #FEE2E2; color: #991B1B; }
 .badge-active     { background: #DCFCE7; color: #166534; }
 .badge-inactive   { background: #F3F4F6; color: #6B7280; }

@@ -49,6 +49,35 @@ recreated), never touching the dev `integra_db`. See `tests/conftest.py`.
 
 Copy `.env.example` to `.env` before first run.
 
+## Testing Requirements (mandatory, not optional)
+
+Every new feature — a new route (frontend or `/api/v1/`), service method, repository method,
+or model/field — must ship with tests in the same change that adds it. Do not consider a
+feature "done" without them, and do not wait to be asked.
+
+- **Unit** (`tests/unit/`): pure logic with no DB — schema validation, helpers like
+  `app/backend/core/phone.py`, security helpers.
+- **Integration** (`tests/integration/`): service-layer behavior against the real disposable
+  test DB (`integra_db_test`, see `tests/conftest.py` / `tests/integration/conftest.py`).
+  Default choice for new service methods and repository logic.
+- **E2E** (`tests/e2e/`): full HTTP flow through the app — required for new frontend routes
+  and for any new `/api/v1/` or `/api/v1/bot/` route, since the chatbot depends on the exact
+  response shape and a service-level test alone won't catch a broken route/schema wiring.
+
+Rules:
+
+1. New `/api/v1/*` or `/api/v1/bot/*` route → at least one test hitting the route directly
+   (integration or e2e), not just the underlying service.
+2. New role/permission check → a test proving the check actually blocks the wrong role, not
+   just that the right role succeeds.
+3. Bug fix → add a regression test that reproduces the bug first, then fix it.
+4. Before reporting a feature complete, run the relevant layer(s) locally:
+   `docker compose exec web pytest tests/unit tests/integration tests/e2e` (or the specific
+   file/test), and mention in the summary which tests were added.
+5. If a change to `/api/v1/` or `/api/v1/bot/` also requires updating `integra-bot`'s
+   `integra_client.py` (per the API Routes section below), note that as a follow-up even
+   though it lives in a separate repo.
+
 ### Pre-commit setup
 
 Hooks (ruff, mypy, and standard hygiene checks — see `.pre-commit-config.yaml`) are wired

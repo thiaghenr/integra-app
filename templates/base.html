@@ -34,6 +34,14 @@
           <span class="nav-icon">📋</span> Prontuários
         </a>
         {% endif %}
+        {% if user.role.value in ['superadmin', 'admin', 'professional', 'paciente'] %}
+        <a href="/goals" class="nav-link {% if '/goals' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🎯</span> Metas
+        </a>
+        <a href="/missions" class="nav-link {% if '/missions' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🚀</span> Missões
+        </a>
+        {% endif %}
         <a href="/professionals" class="nav-link {% if '/professionals' in request.url.path %}active{% endif %}">
           <span class="nav-icon">🩺</span> Profissionais
         </a>

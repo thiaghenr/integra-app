@@ -149,4 +149,68 @@
   {% endif %}
 </div>
 {% endif %}
+
+{% if user.role.value in ['superadmin', 'admin', 'professional', 'paciente'] %}
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Metas ({{ goals | length }})</div>
+    {% if user.role.value in ['superadmin', 'professional'] %}
+    <a href="/goals/new?patient_id={{ patient.id }}" class="btn btn-primary btn-sm">+ Nova</a>
+    {% endif %}
+  </div>
+  {% if goals %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Título</th><th>Status</th><th>Início</th><th>Fim</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for g in goals %}
+        <tr>
+          <td>{{ g.title }}</td>
+          <td><span class="badge badge-{{ g.status.value }}">{{ g.status.value | status_pt }}</span></td>
+          <td>{{ g.start_date or '—' }}</td>
+          <td>{{ g.end_date or '—' }}</td>
+          <td class="actions"><a href="/goals/{{ g.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);">Nenhuma meta ainda.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Missões ({{ missions | length }})</div>
+    {% if user.role.value in ['superadmin', 'professional'] %}
+    <a href="/missions/new?patient_id={{ patient.id }}" class="btn btn-primary btn-sm">+ Nova</a>
+    {% endif %}
+  </div>
+  {% if missions %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Título</th><th>Status</th><th>Início</th><th>Fim</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for m in missions %}
+        <tr>
+          <td>{{ m.title }}</td>
+          <td><span class="badge badge-{{ m.status.value }}">{{ m.status.value | status_pt }}</span></td>
+          <td>{{ m.start_date or '—' }}</td>
+          <td>{{ m.end_date or '—' }}</td>
+          <td class="actions"><a href="/missions/{{ m.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);">Nenhuma missão ainda.</p>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

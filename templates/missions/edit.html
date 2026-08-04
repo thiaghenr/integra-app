@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Editar Missão — Integra{% endblock %}
+{% block page_title %}Editar Missão{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/missions/{{ mission.id }}/edit">
+    <div class="form-group">
+      <label for="title">Título <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="title" name="title" class="form-control" value="{{ mission.title }}" required />
+    </div>
+    <div class="form-group">
+      <label for="description">Descrição</label>
+      <textarea id="description" name="description" class="form-control">{{ mission.description or '' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label for="start_date">Data de Início</label>
+      <input type="date" id="start_date" name="start_date" class="form-control" value="{{ mission.start_date or '' }}" />
+    </div>
+    <div class="form-group">
+      <label for="end_date">Data de Fim</label>
+      <input type="date" id="end_date" name="end_date" class="form-control" value="{{ mission.end_date or '' }}" />
+    </div>
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status" name="status" class="form-control">
+        {% for s in statuses %}
+        <option value="{{ s.value }}" {% if s == mission.status %}selected{% endif %}>{{ s.value | status_pt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+      <a href="/missions/{{ mission.id }}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

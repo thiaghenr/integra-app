@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ mission.title }} — Integra{% endblock %}
+{% block page_title %}Missão{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>{{ mission.title }}</h2>
+  <div style="display:flex;gap:8px;">
+    {% if user.role.value in ['superadmin', 'professional'] %}
+    <a href="/missions/{{ mission.id }}/edit" class="btn btn-secondary">Editar</a>
+    <form method="post" action="/missions/{{ mission.id }}/delete" data-confirm="Arquivar esta missão?">
+      <button type="submit" class="btn btn-danger">Arquivar</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      <div class="form-group">
+        <label>Paciente</label>
+        <p>{% if patient %}<a href="/patients/{{ patient.id }}">{{ patient.full_name }}</a>{% else %}—{% endif %}</p>
+      </div>
+      <div class="form-group">
+        <label>Profissional</label>
+        <p>{{ professional.full_name if professional else '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <p><span class="badge badge-{{ mission.status.value }}">{{ mission.status.value | status_pt }}</span></p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>Data de Início</label>
+        <p>{{ mission.start_date or '—' }}</p>
+      </div>
+      <div class="form-group">
+        <label>Data de Fim</label>
+        <p>{{ mission.end_date or '—' }}</p>
+      </div>
+    </div>
+  </div>
+  {% if mission.description %}
+  <div class="form-group" style="margin-top:8px;">
+    <label>Descrição</label>
+    <p style="white-space:pre-line;">{{ mission.description }}</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if user.role.value in ['superadmin', 'professional', 'paciente'] %}
+<div class="card">
+  <div class="card-title" style="margin-bottom:12px;">Atualizar Status</div>
+  <form method="post" action="/missions/{{ mission.id }}/status" style="display:flex;gap:8px;align-items:flex-end;">
+    <div class="form-group" style="margin-bottom:0;flex:1;">
+      <select name="status" class="form-control">
+        {% for s in statuses %}
+        <option value="{{ s.value }}" {% if s == mission.status %}selected{% endif %}>{{ s.value | status_pt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Atualizar</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

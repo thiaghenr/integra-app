@@ -73,6 +73,8 @@ def _status_pt(value: str) -> str:
         "completed": "Concluído",
         "cancelled": "Cancelado",
         "no_show": "Faltou",
+        "pending": "Pendente",
+        "in_progress": "Em Andamento",
     }.get(value, value.replace("_", " "))
 
 

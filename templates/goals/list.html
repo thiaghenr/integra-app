@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Metas — Integra{% endblock %}
+{% block page_title %}Metas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Metas</h2>
+  {% if user.role.value in ['superadmin', 'professional'] %}
+  <a href="/goals/new" class="btn btn-primary">+ Nova Meta</a>
+  {% endif %}
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Paciente</th>
+        <th>Profissional</th>
+        <th>Título</th>
+        <th>Status</th>
+        <th>Início</th>
+        <th>Fim</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in goals %}
+      <tr>
+        <td>
+          {% if patient_map.get(g.patient_id) %}
+            <a href="/patients/{{ g.patient_id }}">{{ patient_map[g.patient_id].full_name }}</a>
+          {% else %}#{{ g.patient_id }}{% endif %}
+        </td>
+        <td>{% if prof_map.get(g.professional_id) %}{{ prof_map[g.professional_id].full_name }}{% else %}#{{ g.professional_id }}{% endif %}</td>
+        <td>{{ g.title }}</td>
+        <td><span class="badge badge-{{ g.status.value }}">{{ g.status.value | status_pt }}</span></td>
+        <td>{{ g.start_date or '—' }}</td>
+        <td>{{ g.end_date or '—' }}</td>
+        <td class="actions">
+          <a href="/goals/{{ g.id }}" class="btn btn-secondary btn-sm">Ver</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">Nenhuma meta encontrada.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

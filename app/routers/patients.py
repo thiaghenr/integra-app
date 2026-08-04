@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -11,6 +11,8 @@ from app.backend.repositories.medical_record_repository import MedicalRecordRepo
 from app.backend.repositories.user_repository import UserRepository
 from app.backend.schemas.patient import PatientCreate, PatientUpdate
 from app.backend.services.check_in_service import CheckInService
+from app.backend.services.goal_service import GoalService
+from app.backend.services.mission_service import MissionService
 from app.backend.services.patient_service import PatientService
 
 router = APIRouter(prefix="/patients")
@@ -101,6 +103,8 @@ async def create_patient(
                 "check_ins": [],
                 "emotions_by_check_in": {},
                 "body_signals_by_check_in": {},
+                "goals": [],
+                "missions": [],
                 "generated_password": generated_password,
             },
         )
@@ -134,6 +138,17 @@ async def patient_detail(
         emotions_by_check_in = await check_in_service.emotion_names_by_check_in(scope, check_ins)
         body_signals_by_check_in = await check_in_service.body_signal_names_by_check_in(scope, check_ins)
 
+    goals = []
+    missions = []
+    if current_user.role in (UserRole.superadmin, UserRole.admin, UserRole.professional, UserRole.paciente):
+        try:
+            goals = await GoalService(session).list(scope, current_user, patient_id=patient_id)
+            missions = await MissionService(session).list(scope, current_user, patient_id=patient_id)
+        except HTTPException:
+            # e.g. a paciente-role user browsing a patient page that isn't their own —
+            # just show nothing for these cards rather than breaking the whole page.
+            pass
+
     return _t(request).TemplateResponse(
         request,
         "patients/detail.html",
@@ -145,6 +160,8 @@ async def patient_detail(
             "check_ins": check_ins,
             "emotions_by_check_in": emotions_by_check_in,
             "body_signals_by_check_in": body_signals_by_check_in,
+            "goals": goals,
+            "missions": missions,
         },
     )
 
