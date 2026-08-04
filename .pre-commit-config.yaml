@@ -14,19 +14,29 @@ repos:
       - id: check-case-conflict
         exclude: ^migrations/versions/
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
+  # ruff/mypy run from the project's own ./venv (language: system) instead of
+  # pre-commit's isolated per-hook environments, so they always match the
+  # exact versions pinned in requirements-dev.txt. Set up the venv with:
+  #   python3 -m venv venv && venv/bin/pip install -r requirements-dev.txt
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
+      - id: ruff-check
+        name: ruff check
+        entry: venv/bin/ruff check --fix
+        language: system
+        types: [python]
+        exclude: ^migrations/versions/
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
-    hooks:
+      - id: ruff-format
+        name: ruff format
+        entry: venv/bin/ruff format
+        language: system
+        types: [python]
+        exclude: ^migrations/versions/
+
       - id: mypy
-        additional_dependencies:
-          - pydantic>=2.7.0
-          - sqlmodel>=0.0.21
-          - types-aioboto3>=13.0.0
+        name: mypy
+        entry: venv/bin/mypy
+        language: system
+        types: [python]
         exclude: ^migrations/
