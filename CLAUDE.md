@@ -49,6 +49,18 @@ recreated), never touching the dev `integra_db`. See `tests/conftest.py`.
 
 Copy `.env.example` to `.env` before first run.
 
+### Pre-commit setup
+
+Hooks (ruff, mypy, and standard hygiene checks — see `.pre-commit-config.yaml`) are wired
+through a project-tracked `.githooks/` directory instead of the default `.git/hooks/`, so the
+hook cache and `pre-commit.log` live inside the repo at `.cache/pre-commit/` (gitignored)
+instead of `~/.cache/pre-commit` on each developer's machine. One-time setup per clone:
+
+```bash
+pip install ".[lint]"   # or: pip install pre-commit
+git config core.hooksPath .githooks
+```
+
 ## Architecture
 
 ### Layered Backend
