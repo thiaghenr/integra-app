@@ -76,6 +76,7 @@ async def test_valid_emotion_is_linked(db_session, patient_user, patient, emotio
     data = CheckInCreate(intensity=5, emotion_ids=[emotion.id])
 
     check_in = await service.create(patient_user, data)
+    assert check_in.id is not None
     names = await service.emotion_names_by_check_in(patient.clinic_id, [check_in])
 
     assert names[check_in.id] == ["Feliz"]

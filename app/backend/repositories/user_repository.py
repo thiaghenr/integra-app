@@ -12,9 +12,7 @@ class UserRepository(BaseRepository[User]):
         super().__init__(User, session)
 
     async def get_by_email(self, clinic_id: int, email: str) -> User | None:
-        result = await self.session.exec(
-            select(User).where(User.clinic_id == clinic_id, User.email == email)
-        )
+        result = await self.session.exec(select(User).where(User.clinic_id == clinic_id, User.email == email))
         return result.first()
 
     async def get_by_phone(self, phone: str) -> User | None:
@@ -39,4 +37,3 @@ class UserRepository(BaseRepository[User]):
             stmt = stmt.where(User.clinic_id == clinic_id)
         result = await self.session.exec(stmt)
         return list(result.all())
-

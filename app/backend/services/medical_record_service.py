@@ -19,7 +19,9 @@ class MedicalRecordService:
         prof = await self.prof_repo.get_by_user_id(user.id)
         return prof.id if prof else None
 
-    async def list(self, clinic_id: int | None, current_user: User, patient_id: int | None = None) -> list[MedicalRecord]:
+    async def list(
+        self, clinic_id: int | None, current_user: User, patient_id: int | None = None
+    ) -> list[MedicalRecord]:
         professional_id = None
         if current_user.role == UserRole.professional:
             professional_id = await self._professional_id_for_user(current_user)
@@ -45,7 +47,9 @@ class MedicalRecordService:
         )
         return await self.repo.create(record)
 
-    async def update(self, clinic_id: int | None, record_id: int, data: MedicalRecordUpdate, current_user: User) -> MedicalRecord:
+    async def update(
+        self, clinic_id: int | None, record_id: int, data: MedicalRecordUpdate, current_user: User
+    ) -> MedicalRecord:
         record = await self.get(clinic_id, record_id, current_user)
         for field, value in data.model_dump(exclude_none=True).items():
             setattr(record, field, value)

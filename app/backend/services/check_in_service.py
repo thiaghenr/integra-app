@@ -56,14 +56,16 @@ class CheckInService:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     async def create(self, current_user: User, data: CheckInCreate) -> CheckIn:
+        patient: Patient
         if current_user.role == UserRole.paciente:
             patient = await self._own_patient(current_user)
         elif current_user.role == UserRole.superadmin:
             if not data.patient_id:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Paciente é obrigatório")
-            patient = await self.patient_repo.get_by_clinic(None, data.patient_id)
-            if not patient:
+            found_patient = await self.patient_repo.get_by_clinic(None, data.patient_id)
+            if not found_patient:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found")
+            patient = found_patient
         else:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 

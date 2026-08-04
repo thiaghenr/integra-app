@@ -62,6 +62,7 @@ async def api_availability(
     while slot < end:
         if slot.strftime("%H:%M") not in booked_slots:
             all_slots.append(slot.strftime("%H:%M"))
-        slot = slot.replace(minute=slot.minute + 50 if slot.minute + 50 < 60 else 0,
-                            hour=slot.hour + (slot.minute + 50) // 60)
+        slot = slot.replace(
+            minute=slot.minute + 50 if slot.minute + 50 < 60 else 0, hour=slot.hour + (slot.minute + 50) // 60
+        )
     return all_slots

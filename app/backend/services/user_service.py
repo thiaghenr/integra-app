@@ -45,9 +45,7 @@ class UserService:
                 )
         user = await self.repo.create(user)
         if data.phone:
-            await self.phone_list_repo.create(
-                PhoneList(user_id=user.id, phone=data.phone, phone_canonical=canonical)
-            )
+            await self.phone_list_repo.create(PhoneList(user_id=user.id, phone=data.phone, phone_canonical=canonical))
         return user
 
     async def update(self, clinic_id: int | None, user_id: int, data: UserUpdate) -> User:

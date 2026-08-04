@@ -82,6 +82,7 @@ async def change_password(
     session: AsyncSession = Depends(get_db),
 ):
     from app.backend.services.user_service import UserService
+
     service = UserService(session)
     try:
         await service.change_password(current_user, current_password, new_password)

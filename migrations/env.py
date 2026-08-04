@@ -5,20 +5,21 @@ from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 
+import app.backend.models.appointment  # noqa: F401
+import app.backend.models.body_signal  # noqa: F401
+import app.backend.models.check_in  # noqa: F401
+import app.backend.models.check_in_body_signal  # noqa: F401
+import app.backend.models.check_in_emotion  # noqa: F401
+
 # Import all models so their metadata is registered
 import app.backend.models.clinic  # noqa: F401
-import app.backend.models.user  # noqa: F401
-import app.backend.models.professional  # noqa: F401
-import app.backend.models.patient  # noqa: F401
-import app.backend.models.appointment  # noqa: F401
-import app.backend.models.medical_record  # noqa: F401
-import app.backend.models.phone_list  # noqa: F401
-import app.backend.models.check_in  # noqa: F401
 import app.backend.models.emotion  # noqa: F401
-import app.backend.models.check_in_emotion  # noqa: F401
 import app.backend.models.family_member  # noqa: F401
-import app.backend.models.body_signal  # noqa: F401
-import app.backend.models.check_in_body_signal  # noqa: F401
+import app.backend.models.medical_record  # noqa: F401
+import app.backend.models.patient  # noqa: F401
+import app.backend.models.phone_list  # noqa: F401
+import app.backend.models.professional  # noqa: F401
+import app.backend.models.user  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

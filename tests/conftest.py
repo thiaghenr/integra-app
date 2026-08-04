@@ -3,8 +3,6 @@ import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 
-from app.backend.core.config import settings
-
 # Import every model so SQLModel.metadata knows about all tables before create_all().
 import app.backend.models.appointment  # noqa: F401
 import app.backend.models.body_signal  # noqa: F401
@@ -19,6 +17,7 @@ import app.backend.models.patient  # noqa: F401
 import app.backend.models.phone_list  # noqa: F401
 import app.backend.models.professional  # noqa: F401
 import app.backend.models.user  # noqa: F401
+from app.backend.core.config import settings
 
 
 def _test_database_url(async_url: str) -> str:

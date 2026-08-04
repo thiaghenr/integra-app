@@ -10,9 +10,7 @@ async def user_with_phone(db_session, patient_user):
     from app.backend.core.phone import canonical_phone
 
     phone = "5545991115537"
-    db_session.add(
-        PhoneList(user_id=patient_user.id, phone=phone, phone_canonical=canonical_phone(phone))
-    )
+    db_session.add(PhoneList(user_id=patient_user.id, phone=phone, phone_canonical=canonical_phone(phone)))
     await db_session.commit()
     return patient_user
 

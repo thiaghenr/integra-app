@@ -66,6 +66,7 @@ async def create_patient(
     session: AsyncSession = Depends(get_db),
 ):
     from datetime import date
+
     service = PatientService(session)
     target_clinic_id = clinic_id if (current_user.role == UserRole.superadmin and clinic_id) else current_user.clinic_id
     try:
@@ -180,6 +181,7 @@ async def update_patient(
     session: AsyncSession = Depends(get_db),
 ):
     from datetime import date
+
     scope = clinic_scope(current_user)
     service = PatientService(session)
     try:

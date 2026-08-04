@@ -42,7 +42,8 @@ class PatientRepository(BaseRepository[Patient]):
 
     async def get_by_phone(self, clinic_id: int | None, phone: str) -> Patient | None:
         stmt = select(Patient).where(
-            Patient.phone.in_(phone_variants(phone)), Patient.is_active == True  # noqa: E712
+            Patient.phone.in_(phone_variants(phone)),
+            Patient.is_active == True,  # noqa: E712
         )
         if clinic_id is not None:
             stmt = stmt.where(Patient.clinic_id == clinic_id)

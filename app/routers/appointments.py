@@ -80,6 +80,7 @@ async def create_appointment(
     session: AsyncSession = Depends(get_db),
 ):
     from datetime import datetime
+
     service = AppointmentService(session)
     try:
         data = AppointmentCreate(
@@ -176,6 +177,7 @@ async def update_appointment(
     session: AsyncSession = Depends(get_db),
 ):
     from datetime import datetime
+
     scope = clinic_scope(current_user)
     service = AppointmentService(session)
     try:

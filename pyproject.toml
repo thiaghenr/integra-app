@@ -27,6 +27,11 @@ test = [
     "pytest-asyncio>=0.24.0",
     "httpx>=0.27.0",
 ]
+lint = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "types-aioboto3>=13.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -38,3 +43,56 @@ packages = ["app"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+# *.md/.claude excluded because ruff format's docstring-code formatting also reaches
+# into fenced code blocks in standalone Markdown files — we only want real source touched.
+extend-exclude = ["migrations/versions", "*.md", ".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "B008",   # FastAPI's Depends()/Form()/Query() default-arg pattern is intentional
+    "UP042",  # class Foo(str, Enum) vs StrEnum — behavior differs subtly, not a mechanical rename
+    "UP046",  # Generic[T] vs PEP 695 syntax — stylistic, not worth a mixed-style migration here
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+exclude = ["migrations/versions"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true
+disable_error_code = [
+    # SQLModel PK fields are typed `int | None` (to allow pre-insert instances) even
+    # though every DB-fetched instance always has the field populated.
+    "arg-type",
+    # FastAPI's documented `app.openapi = custom_openapi` pattern reassigns a bound method.
+    "method-assign",
+    # pydantic's `@computed_field` + `@property` combo is intentional and supported at runtime.
+    "prop-decorator",
+]
+
+[[tool.mypy.overrides]]
+# Every service class exposes a `.list()` method, which makes mypy misresolve `list[...]`
+# annotations elsewhere in the same class to that method instead of the builtin generic —
+# even with `from __future__ import annotations`. Purely a static-analysis quirk (no runtime
+# effect); revisit if these methods are ever renamed.
+module = "app.backend.services.*"
+disable_error_code = ["valid-type", "misc", "attr-defined"]
+
+[[tool.mypy.overrides]]
+# SQLModel's class-level column access (e.g. `Patient.phone.in_(...)`) is typed using the
+# column's Python type (e.g. `str | None`), not SQLAlchemy's `InstrumentedAttribute` — there's
+# no official SQLModel mypy plugin to bridge this, so the repository layer's query-builder
+# calls (`.in_()`, `.ilike()`, `.desc()`, `.join()`) false-positive constantly. Every other
+# layer (services, routers, schemas) keeps full checking.
+module = "app.backend.repositories.*"
+disable_error_code = ["union-attr", "attr-defined", "arg-type"]

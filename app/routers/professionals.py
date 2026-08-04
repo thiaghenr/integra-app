@@ -77,7 +77,9 @@ async def create_professional(
         clinics = await ClinicRepository(session).list_all() if current_user.role == UserRole.superadmin else []
         users = await UserRepository(session).list_by_clinic(clinic_scope(current_user))
         return _t(request).TemplateResponse(
-            request, "professionals/create.html", {"user": current_user, "clinics": clinics, "users": users, "error": str(e)}
+            request,
+            "professionals/create.html",
+            {"user": current_user, "clinics": clinics, "users": users, "error": str(e)},
         )
     if generated_password:
         return _t(request).TemplateResponse(

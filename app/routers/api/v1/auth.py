@@ -24,7 +24,7 @@ async def get_token(body: TokenRequest, session: AsyncSession = Depends(get_db))
     try:
         user = await AuthService(session).authenticate_global(body.email, body.password)
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials") from None
     return TokenResponse(access_token=create_jwt(user.id))
 
 

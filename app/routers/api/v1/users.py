@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.backend.core.deps import clinic_scope, get_current_user, get_db, require_roles
+from app.backend.core.deps import clinic_scope, get_db, require_roles
 from app.backend.models.user import User, UserRole
 from app.backend.repositories.user_repository import UserRepository
 from app.backend.schemas.user import UserRead

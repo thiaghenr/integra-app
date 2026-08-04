@@ -1,8 +1,8 @@
 import logging
 import os
 import warnings
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -67,13 +67,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def _status_pt(value: str) -> str:
-    return {"scheduled": "Agendado", "confirmed": "Confirmado", "completed": "Concluído",
-            "cancelled": "Cancelado", "no_show": "Faltou"}.get(value, value.replace("_", " "))
+    return {
+        "scheduled": "Agendado",
+        "confirmed": "Confirmado",
+        "completed": "Concluído",
+        "cancelled": "Cancelado",
+        "no_show": "Faltou",
+    }.get(value, value.replace("_", " "))
 
 
 def _role_pt(value: str) -> str:
-    return {"superadmin": "Superadmin", "admin": "Administrador", "receptionist": "Recepcionista",
-            "professional": "Profissional", "viewer": "Visualizador", "paciente": "Paciente"}.get(value, value)
+    return {
+        "superadmin": "Superadmin",
+        "admin": "Administrador",
+        "receptionist": "Recepcionista",
+        "professional": "Profissional",
+        "viewer": "Visualizador",
+        "paciente": "Paciente",
+    }.get(value, value)
 
 
 def api() -> FastAPI:
@@ -120,7 +131,7 @@ def api() -> FastAPI:
                 async with AsyncSessionLocal() as session:
                     user = await load_user_from_bearer(request, session)
                 if user is None:
-                    print("N"*10)
+                    print("N" * 10)
                     return JSONResponse({"detail": "Not authenticated"}, status_code=401)
                 request.state.user = user
             else:
@@ -141,7 +152,7 @@ def api() -> FastAPI:
 
     return app
 
- 
+
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:api",

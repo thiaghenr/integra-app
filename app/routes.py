@@ -13,13 +13,13 @@ from app.routers import (
     professionals,
     users,
 )
-from app.routers.appointments import router as appointments_router
 from app.routers.api.v1 import appointments as api_appointments
 from app.routers.api.v1 import auth as api_auth
 from app.routers.api.v1 import bot as api_bot
 from app.routers.api.v1 import patients as api_patients
 from app.routers.api.v1 import professionals as api_professionals
 from app.routers.api.v1 import users as api_users
+from app.routers.appointments import router as appointments_router
 
 
 def register_routes(app: FastAPI) -> None:

@@ -56,17 +56,17 @@ def clinic_scope(user: User) -> int | None:
 async def load_user_from_bearer(request: Request, session: AsyncSession) -> User | None:
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
-        print("l59"*2)
+        print("l59" * 2)
         return None
     token = auth.removeprefix("Bearer ")
     user_id = decode_jwt(token)
     if not user_id:
-        print("l64"*2)
+        print("l64" * 2)
         return None
     repo = UserRepository(session)
     user = await repo.get(user_id)
     if not user or not user.is_active:
-        print("l69"*2)
+        print("l69" * 2)
         return None
     return user
 

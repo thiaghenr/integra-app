@@ -28,7 +28,8 @@ class ProfessionalRepository(BaseRepository[Professional]):
 
     async def get_by_phone(self, clinic_id: int | None, phone: str) -> Professional | None:
         stmt = select(Professional).where(
-            Professional.phone.in_(phone_variants(phone)), Professional.is_active == True  # noqa: E712
+            Professional.phone.in_(phone_variants(phone)),
+            Professional.is_active == True,  # noqa: E712
         )
         if clinic_id is not None:
             stmt = stmt.where(Professional.clinic_id == clinic_id)

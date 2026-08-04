@@ -44,9 +44,7 @@ async def create_emotion(
     try:
         await service.create(current_user.clinic_id, EmotionCreate(name=name))
     except Exception as e:
-        return _t(request).TemplateResponse(
-            request, "emotions/create.html", {"user": current_user, "error": str(e)}
-        )
+        return _t(request).TemplateResponse(request, "emotions/create.html", {"user": current_user, "error": str(e)})
     return RedirectResponse("/emotions", status_code=302)
 
 

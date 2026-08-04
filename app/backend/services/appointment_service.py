@@ -21,7 +21,9 @@ class AppointmentService:
         prof = await self.prof_repo.get_by_user_id(user.id)
         return prof.id if prof else None
 
-    async def list(self, clinic_id: int | None, current_user: User, professional_id: int | None = None) -> list[Appointment]:
+    async def list(
+        self, clinic_id: int | None, current_user: User, professional_id: int | None = None
+    ) -> list[Appointment]:
         if current_user.role == UserRole.professional:
             professional_id = await self._professional_id_for_user(current_user)
         return await self.repo.list_by_clinic(clinic_id, professional_id=professional_id)
@@ -47,7 +49,9 @@ class AppointmentService:
         )
         return await self.repo.create(appt)
 
-    async def update(self, clinic_id: int | None, appointment_id: int, data: AppointmentUpdate, current_user: User) -> Appointment:
+    async def update(
+        self, clinic_id: int | None, appointment_id: int, data: AppointmentUpdate, current_user: User
+    ) -> Appointment:
         appt = await self.get(clinic_id, appointment_id, current_user)
         for field, value in data.model_dump(exclude_none=True).items():
             setattr(appt, field, value)

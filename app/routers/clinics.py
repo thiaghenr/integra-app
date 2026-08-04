@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.backend.core.deps import get_current_user, get_db, require_roles, require_superadmin
+from app.backend.core.deps import get_db, require_roles, require_superadmin
 from app.backend.models.clinic import Clinic
 from app.backend.models.user import User, UserRole
 from app.backend.repositories.clinic_repository import ClinicRepository
@@ -15,6 +15,7 @@ def _t(request: Request):
 
 
 # ── Superadmin: full clinic management ────────────────────────────────────────
+
 
 @router.get("/clinics", response_class=HTMLResponse)
 async def list_clinics(
@@ -67,7 +68,9 @@ async def edit_clinic_form(
     clinic = await repo.get(clinic_id)
     if not clinic:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clinic not found")
-    return _t(request).TemplateResponse(request, "clinics/edit.html", {"user": current_user, "clinic": clinic, "error": None})
+    return _t(request).TemplateResponse(
+        request, "clinics/edit.html", {"user": current_user, "clinic": clinic, "error": None}
+    )
 
 
 @router.post("/clinics/{clinic_id}/edit", response_class=HTMLResponse)
@@ -102,16 +105,17 @@ async def update_clinic(
 
 # ── Admin: edit own clinic settings ────────────────────────────────────────
 
+
 @router.get("/settings/clinic", response_class=HTMLResponse)
 async def clinic_settings_form(
     request: Request,
     current_user: User = Depends(require_roles(UserRole.admin)),
     session: AsyncSession = Depends(get_db),
 ):
-    print("1"*10)
     repo = ClinicRepository(session)
-    print("1"*10)
     clinic = await repo.get(current_user.clinic_id)
+    if not clinic:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clinic not found")
     return _t(request).TemplateResponse(
         request, "settings/clinic.html", {"user": current_user, "clinic": clinic, "error": None, "saved": False}
     )
@@ -128,6 +132,8 @@ async def update_clinic_settings(
 ):
     repo = ClinicRepository(session)
     clinic = await repo.get(current_user.clinic_id)
+    if not clinic:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clinic not found")
     clinic.name = name
     clinic.address = address or None
     clinic.phone = phone or None

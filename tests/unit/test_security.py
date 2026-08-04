@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 
@@ -30,7 +30,7 @@ def test_create_and_decode_jwt_round_trip():
 
 
 def test_decode_jwt_rejects_expired_token():
-    expired_payload = {"sub": "42", "exp": datetime.now(timezone.utc) - timedelta(minutes=1)}
+    expired_payload = {"sub": "42", "exp": datetime.now(UTC) - timedelta(minutes=1)}
     expired_token = jwt.encode(expired_payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
     assert decode_jwt(expired_token) is None

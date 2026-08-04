@@ -10,7 +10,5 @@ class PhoneListRepository(BaseRepository[PhoneList]):
         super().__init__(PhoneList, session)
 
     async def get_by_canonical(self, phone_canonical: str) -> PhoneList | None:
-        result = await self.session.exec(
-            select(PhoneList).where(PhoneList.phone_canonical == phone_canonical)
-        )
+        result = await self.session.exec(select(PhoneList).where(PhoneList.phone_canonical == phone_canonical))
         return result.first()
