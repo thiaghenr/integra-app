@@ -20,7 +20,11 @@
     <div>
       <div class="form-group">
         <label>Paciente</label>
-        <p>{% if patient %}<a href="/patients/{{ patient.id }}">{{ patient.full_name }}</a>{% else %}—{% endif %}</p>
+        <p>
+          {% if not patient %}—
+          {% elif user.role.value == 'paciente' %}{{ patient.full_name }}
+          {% else %}<a href="/patients/{{ patient.id }}">{{ patient.full_name }}</a>{% endif %}
+        </p>
       </div>
       <div class="form-group">
         <label>Profissional</label>

@@ -31,7 +31,7 @@ async def list_check_ins(
 
     patients_by_id = {}
     creatable_patients = []
-    if current_user.role in (UserRole.superadmin, UserRole.admin):
+    if current_user.role in (UserRole.superadmin, UserRole.admin, UserRole.professional):
         patient_ids = sorted({c.patient_id for c in check_ins})
         patients_by_id = {p.id: p for p in await PatientRepository(session).get_by_ids(scope, patient_ids)}
         if current_user.role == UserRole.superadmin:
@@ -135,7 +135,7 @@ async def check_in_detail(
     body_signals = (await service.body_signal_names_by_check_in(scope, [check_in])).get(check_in.id, [])
 
     patient = None
-    if current_user.role in (UserRole.superadmin, UserRole.admin):
+    if current_user.role in (UserRole.superadmin, UserRole.admin, UserRole.professional):
         patient = await PatientRepository(session).get_by_clinic(scope, check_in.patient_id)
 
     return _t(request).TemplateResponse(

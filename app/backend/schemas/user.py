@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, computed_field, field_validator
+from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 
 from app.backend.core.phone import normalize_phone
 from app.backend.models.user import UserRole
@@ -47,3 +47,7 @@ class UserRead(BaseModel):
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str
+
+
+class AdminPasswordReset(BaseModel):
+    new_password: str = Field(min_length=8)

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ material.title }} — Integra{% endblock %}
+{% block page_title %}{{ material.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>{{ material.title }}</h2>
+  {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+  <div>
+    <form method="post" action="/materials/{{ material.id }}/reimport" style="display:inline;">
+      <button type="submit" class="btn btn-secondary btn-sm">Reimportar do Google Docs</button>
+    </form>
+    <a href="/materials" class="btn btn-secondary btn-sm">Voltar</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="material-content" style="max-width:720px;line-height:1.7;">
+  {{ material.content_html | safe }}
+</div>
+{% endblock %}

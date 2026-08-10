@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.backend.core.deps import clinic_scope, get_current_user, get_db, require_roles
+from app.backend.core.deps import clinic_scope, get_db, require_roles
 from app.backend.models.user import User, UserRole
 from app.backend.repositories.appointment_repository import AppointmentRepository
 from app.backend.repositories.check_in_repository import CheckInRepository
@@ -26,7 +26,9 @@ def _t(request: Request):
 async def list_patients(
     request: Request,
     search: str = Query(None),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional, UserRole.viewer)
+    ),
     session: AsyncSession = Depends(get_db),
 ):
     service = PatientService(session)
@@ -115,7 +117,9 @@ async def create_patient(
 async def patient_detail(
     request: Request,
     patient_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional, UserRole.viewer)
+    ),
     session: AsyncSession = Depends(get_db),
 ):
     scope = clinic_scope(current_user)
@@ -140,14 +144,9 @@ async def patient_detail(
 
     goals = []
     missions = []
-    if current_user.role in (UserRole.superadmin, UserRole.admin, UserRole.professional, UserRole.paciente):
-        try:
-            goals = await GoalService(session).list(scope, current_user, patient_id=patient_id)
-            missions = await MissionService(session).list(scope, current_user, patient_id=patient_id)
-        except HTTPException:
-            # e.g. a paciente-role user browsing a patient page that isn't their own —
-            # just show nothing for these cards rather than breaking the whole page.
-            pass
+    if current_user.role in (UserRole.superadmin, UserRole.admin, UserRole.professional):
+        goals = await GoalService(session).list(scope, current_user, patient_id=patient_id)
+        missions = await MissionService(session).list(scope, current_user, patient_id=patient_id)
 
     return _t(request).TemplateResponse(
         request,

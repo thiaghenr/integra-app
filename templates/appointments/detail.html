@@ -6,7 +6,7 @@
 <div class="page-header">
   <h2>Agendamento #{{ appointment.id }}</h2>
   <div style="display:flex;gap:8px;">
-    {% if user.role.value in ['admin', 'receptionist'] %}
+    {% if user.role.value in ['admin', 'receptionist', 'professional'] %}
     <a href="/appointments/{{ appointment.id }}/edit" class="btn btn-secondary">Editar</a>
     {% if appointment.status.value not in ['cancelled', 'completed'] %}
     <form method="post" action="/appointments/{{ appointment.id }}/cancel" data-confirm="Cancelar este agendamento?">
@@ -22,7 +22,10 @@
     <div>
       <div class="form-group">
         <label>Paciente</label>
-        <p><a href="/patients/{{ appointment.patient_id }}">{{ patient.full_name if patient else '#' + appointment.patient_id|string }}</a></p>
+        <p>
+          {% if user.role.value == 'paciente' %}{{ patient.full_name if patient else '#' + appointment.patient_id|string }}
+          {% else %}<a href="/patients/{{ appointment.patient_id }}">{{ patient.full_name if patient else '#' + appointment.patient_id|string }}</a>{% endif %}
+        </p>
       </div>
       <div class="form-group">
         <label>Profissional</label>

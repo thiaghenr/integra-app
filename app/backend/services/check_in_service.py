@@ -6,12 +6,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.backend.models.check_in import CheckIn
 from app.backend.models.patient import Patient
 from app.backend.models.user import User, UserRole
+from app.backend.repositories.appointment_repository import AppointmentRepository
 from app.backend.repositories.body_signal_repository import BodySignalRepository
 from app.backend.repositories.check_in_body_signal_repository import CheckInBodySignalRepository
 from app.backend.repositories.check_in_emotion_repository import CheckInEmotionRepository
 from app.backend.repositories.check_in_repository import CheckInRepository
 from app.backend.repositories.emotion_repository import EmotionRepository
 from app.backend.repositories.patient_repository import PatientRepository
+from app.backend.repositories.professional_repository import ProfessionalRepository
 from app.backend.schemas.check_in import CheckInCreate
 
 _ADMIN_ROLES = (UserRole.superadmin, UserRole.admin)
@@ -25,6 +27,8 @@ class CheckInService:
         self.check_in_emotion_repo = CheckInEmotionRepository(session)
         self.body_signal_repo = BodySignalRepository(session)
         self.check_in_body_signal_repo = CheckInBodySignalRepository(session)
+        self.prof_repo = ProfessionalRepository(session)
+        self.appointment_repo = AppointmentRepository(session)
 
     async def _own_patient(self, current_user: User) -> Patient:
         patient = await self.patient_repo.get_by_user_id(current_user.id)
@@ -34,11 +38,25 @@ class CheckInService:
             )
         return patient
 
+    async def _own_patient_ids_for_professional(self, clinic_id: int | None, current_user: User) -> list[int]:
+        professional = await self.prof_repo.get_by_user_id(current_user.id)
+        if not professional:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="No professional profile linked to this account"
+            )
+        appointments = await self.appointment_repo.list_by_clinic(clinic_id, professional_id=professional.id)
+        return sorted({a.patient_id for a in appointments})
+
     async def get(self, clinic_id: int | None, check_in_id: int, current_user: User) -> CheckIn:
         check_in = await self.repo.get(check_in_id)
         if not check_in or (clinic_id is not None and check_in.clinic_id != clinic_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Check-in not found")
         if current_user.role in _ADMIN_ROLES:
+            return check_in
+        if current_user.role == UserRole.professional:
+            patient_ids = await self._own_patient_ids_for_professional(clinic_id, current_user)
+            if check_in.patient_id not in patient_ids:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
             return check_in
         if current_user.role == UserRole.paciente:
             patient = await self._own_patient(current_user)
@@ -50,10 +68,25 @@ class CheckInService:
     async def list(self, clinic_id: int | None, current_user: User) -> list[CheckIn]:
         if current_user.role in _ADMIN_ROLES:
             return await self.repo.list_by_clinic(clinic_id)
+        if current_user.role == UserRole.professional:
+            patient_ids = await self._own_patient_ids_for_professional(clinic_id, current_user)
+            if not patient_ids:
+                return []
+            return await self.repo.list_by_clinic(clinic_id, patient_ids=patient_ids)
         if current_user.role == UserRole.paciente:
             patient = await self._own_patient(current_user)
             return await self.repo.list_by_clinic(clinic_id, patient_id=patient.id)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    async def list_own_paginated(
+        self, clinic_id: int | None, current_user: User, page: int = 1, page_size: int = 5
+    ) -> tuple[list[CheckIn], int]:
+        patient = await self._own_patient(current_user)
+        total = await self.repo.count_by_clinic(clinic_id, patient_id=patient.id)
+        check_ins = await self.repo.list_by_clinic(
+            clinic_id, patient_id=patient.id, limit=page_size, offset=(page - 1) * page_size
+        )
+        return check_ins, total
 
     async def create(self, current_user: User, data: CheckInCreate) -> CheckIn:
         patient: Patient

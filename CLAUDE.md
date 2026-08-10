@@ -321,6 +321,77 @@ On first startup, create:
 - Admin user: `admin@integra.com` / `admin123` with forced password change on first login
 - Warn if `SECRET_KEY` is still the default value
 
+## Infrastructure (AWS)
+
+IaC lives in `infra/`. **AWS CDK (Python, `infra/cdk/`) is the tool actually used going
+forward** — `infra/cloudformation/template.yaml` is kept only as a reference/comparison of
+the same architecture and should not drift too far out of sync, but new infra work happens
+in the CDK stack (`infra/cdk/integra_stack.py`).
+
+Architecture decisions (all deliberate, not defaults — see chat history for the cost
+reasoning): single shared VPC for all environments, ECS Fargate tasks in a **public** subnet
+with their own public IP (no ALB, no NAT gateway — both were the two biggest line items in
+the cost estimate), TLS terminated by a `caddy` sidecar container in the same task
+(automatic Let's Encrypt via `caddy reverse-proxy`), RDS PostgreSQL single-AZ in an isolated
+private subnet with no internet route. DB credentials come from the RDS-managed Secrets
+Manager secret (username/password only) — `entrypoint.sh` assembles `DATABASE_URL` from
+`POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` env
+vars at container startup (falls back to a pre-set `DATABASE_URL` for local dev via `.env`),
+since that combined URL doesn't exist anywhere as one secret.
+
+Only **dev** is active right now. Prod resources exist in both `template.yaml` and
+`integra_stack.py` but are commented out (search "Prod" / "prod" — every prod-related
+resource, secret, and IAM policy reference is disabled together, on purpose, so re-enabling
+it later means uncommenting rather than re-deriving). Do not silently reactivate prod
+resources in either file without being asked.
+
+Since the task's public IP changes on every deploy, Route 53 A records are **not** part of
+either template — `deploy.yml` looks up the new task's IP via the ECS/EC2 API after deploy
+and UPSERTs the Route 53 record as its last step (see below).
+
+`infra/cdk/tests/unit/test_integra_stack.py` uses `aws_cdk.assertions.Template` to lock in
+the cost/security decisions above — no NAT gateway, no ALB, only one environment's worth of
+ECS service/task/RDS instance active, RDS not publicly accessible, DB password never in a
+plain `Environment` var, GitHub deploy role has no long-lived IAM user/access key and is
+scoped to this repo + the `main` branch only. Extend this test file (don't just eyeball
+`cdk synth` output) any time the stack changes, per the project's usual testing rule.
+
+```bash
+cd infra/cdk
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+pytest tests/ -v      # asserts the architecture decisions above
+cdk synth              # renders the actual CloudFormation
+```
+
+### CI/CD (`.github/workflows/deploy.yml`)
+
+Push to `main` auto-deploys **dev**. `workflow_dispatch` still works for a manual run against
+another environment (only meaningful once that environment exists for real in `integra_stack.py`
+— today that's just dev). Flow: build image → push to ECR (not `ghcr.io` — ECS needs to pull
+from the same account without cross-registry credentials) → `ecs update-service
+--force-new-deployment` → wait for the service to stabilize → look up the new task's ENI public
+IP → UPSERT the Route 53 A record.
+
+There is deliberately **no separate "migrate" job**. The RDS instance sits in an isolated
+private subnet with no internet route, so a GitHub-hosted runner can never reach it directly —
+migrations run inside the container itself (`entrypoint.sh`, already inside the VPC) before
+`uvicorn` starts, as part of the same deploy.
+
+Auth is OIDC (`infra/cdk/integra_stack.py`'s `GithubDeployRole`) — no AWS access keys stored as
+GitHub secrets. Before the first real deploy:
+
+1. Edit `GITHUB_REPO` and `HOSTED_ZONE_ID` at the top of `integra_stack.py` (currently
+   placeholders), then `cdk deploy`.
+2. Under GitHub Settings → Environments → `dev`, set these repo/environment **Variables**
+   (not secrets — none of this is sensitive): `AWS_DEPLOY_ROLE_ARN` (the `GithubDeployRoleArn`
+   stack output), `APP_DOMAIN` (e.g. `dev.integra.example.com`), `HOSTED_ZONE_ID`, and
+   optionally `AWS_REGION` (defaults to `us-east-1`).
+
+The task IP lookup only grabs one task's IP — fine for dev (1 task). If prod (2 tasks) is
+reactivated, that step needs to become a Route 53 multivalue-answer setup instead of a single
+UPSERT — flagged with a `NOTE` comment at that step in `deploy.yml`.
+
 ## Key Constraints
 
 - All Alembic migrations from day one — no `CREATE TABLE` or `ALTER TABLE` in startup code

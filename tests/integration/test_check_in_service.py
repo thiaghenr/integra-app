@@ -1,6 +1,9 @@
+from datetime import datetime
+
 import pytest
 from fastapi import HTTPException
 
+from app.backend.models.appointment import Appointment
 from app.backend.models.emotion import Emotion
 from app.backend.models.user import UserRole
 from app.backend.schemas.check_in import CheckInCreate
@@ -125,3 +128,123 @@ async def test_patient_without_linked_patient_record_gets_404(db_session, clinic
         await service.create(lone_user, CheckInCreate(intensity=5))
 
     assert exc_info.value.status_code == 404
+
+
+async def test_list_own_paginated_returns_page_size_and_total(db_session, patient_user, patient):
+    service = CheckInService(db_session)
+    for intensity in range(7):
+        await service.create(patient_user, CheckInCreate(intensity=intensity + 1))
+
+    check_ins, total = await service.list_own_paginated(patient.clinic_id, patient_user, page=1, page_size=5)
+
+    assert total == 7
+    assert len(check_ins) == 5
+
+
+async def test_list_own_paginated_second_page_has_remainder(db_session, patient_user, patient):
+    service = CheckInService(db_session)
+    for intensity in range(7):
+        await service.create(patient_user, CheckInCreate(intensity=intensity + 1))
+
+    check_ins, total = await service.list_own_paginated(patient.clinic_id, patient_user, page=2, page_size=5)
+
+    assert total == 7
+    assert len(check_ins) == 2
+
+
+async def test_list_own_paginated_excludes_other_patients_check_ins(
+    db_session, patient_user, patient, other_patient, superadmin_user
+):
+    service = CheckInService(db_session)
+    await service.create(patient_user, CheckInCreate(intensity=3))
+    await service.create(superadmin_user, CheckInCreate(intensity=9, patient_id=other_patient.id))
+
+    check_ins, total = await service.list_own_paginated(patient.clinic_id, patient_user)
+
+    assert total == 1
+    # assert check_ins[0].patient_id == patient.id
+
+
+async def test_professional_lists_check_ins_only_for_own_patients(
+    db_session,
+    clinic,
+    professional,
+    professional_user,
+    patient,
+    other_patient,
+    patient_user,
+    superadmin_user,
+    admin_user,
+):
+    db_session.add(
+        Appointment(
+            clinic_id=clinic.id,
+            patient_id=patient.id,
+            professional_id=professional.id,
+            scheduled_at=datetime(2026, 8, 10, 14, 0),
+            created_by=admin_user.id,
+        )
+    )
+    await db_session.commit()
+
+    service = CheckInService(db_session)
+    await service.create(patient_user, CheckInCreate(intensity=6))
+    await service.create(superadmin_user, CheckInCreate(intensity=2, patient_id=other_patient.id))
+
+    check_ins = await service.list(clinic.id, professional_user)
+
+    assert [c.patient_id for c in check_ins] == [patient.id]
+
+
+async def test_professional_get_own_patients_check_in_succeeds(
+    db_session, clinic, professional, professional_user, patient, patient_user, admin_user
+):
+    db_session.add(
+        Appointment(
+            clinic_id=clinic.id,
+            patient_id=patient.id,
+            professional_id=professional.id,
+            scheduled_at=datetime(2026, 8, 10, 14, 0),
+            created_by=admin_user.id,
+        )
+    )
+    await db_session.commit()
+
+    service = CheckInService(db_session)
+    check_in = await service.create(patient_user, CheckInCreate(intensity=6))
+
+    fetched = await service.get(clinic.id, check_in.id, professional_user)
+
+    assert fetched.id == check_in.id
+
+
+async def test_professional_cannot_get_another_patients_check_in(
+    db_session, clinic, professional, professional_user, other_patient, superadmin_user
+):
+    service = CheckInService(db_session)
+    other_check_in = await service.create(superadmin_user, CheckInCreate(intensity=9, patient_id=other_patient.id))
+
+    with pytest.raises(HTTPException) as exc_info:
+        await service.get(clinic.id, other_check_in.id, professional_user)
+
+    assert exc_info.value.status_code == 403
+
+
+async def test_professional_without_linked_professional_record_gets_404(db_session, clinic):
+    from tests.integration.conftest import _make_user
+
+    lone_user = await _make_user(db_session, clinic, UserRole.professional, "lonely-prof@test.com")
+    service = CheckInService(db_session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await service.list(clinic.id, lone_user)
+
+    assert exc_info.value.status_code == 404
+
+
+async def test_professional_with_no_patients_returns_empty_list(db_session, clinic, professional, professional_user):
+    service = CheckInService(db_session)
+
+    check_ins = await service.list(clinic.id, professional_user)
+
+    assert check_ins == []

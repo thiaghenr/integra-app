@@ -9,6 +9,7 @@ from app.routers import (
     emotions,
     family_members,
     goals,
+    materials,
     medical_records,
     missions,
     patients,
@@ -39,6 +40,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(family_members.router)
     app.include_router(goals.router)
     app.include_router(missions.router)
+    app.include_router(materials.router)
 
     app.include_router(api_auth.router, prefix="/api/v1")
     app.include_router(api_patients.router, prefix="/api/v1")

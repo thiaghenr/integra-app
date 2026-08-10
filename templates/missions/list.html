@@ -27,7 +27,9 @@
       {% for m in missions %}
       <tr>
         <td>
-          {% if patient_map.get(m.patient_id) %}
+          {% if user.role.value == 'paciente' %}
+            {{ patient_map[m.patient_id].full_name if patient_map.get(m.patient_id) else '#' + m.patient_id|string }}
+          {% elif patient_map.get(m.patient_id) %}
             <a href="/patients/{{ m.patient_id }}">{{ patient_map[m.patient_id].full_name }}</a>
           {% else %}#{{ m.patient_id }}{% endif %}
         </td>

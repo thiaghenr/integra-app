@@ -1,8 +1,9 @@
 import pytest
 from fastapi import HTTPException
 
+from app.backend.core.security import verify_password
 from app.backend.models.user import UserRole
-from app.backend.schemas.user import UserCreate
+from app.backend.schemas.user import AdminPasswordReset, UserCreate
 from app.backend.services.user_service import UserService
 
 
@@ -71,3 +72,27 @@ async def test_create_user_duplicate_phone_conflicts_even_with_different_nine_di
         )
 
     assert exc_info.value.status_code == 409
+
+
+async def test_reset_password_changes_hash_and_forces_change_on_next_login(db_session, clinic):
+    service = UserService(db_session)
+    user = await service.create(
+        clinic.id,
+        UserCreate(email="forgot@test.com", name="A", surname="B", role=UserRole.viewer, password="oldpassword1"),
+    )
+    assert user.force_password_change is False
+
+    updated = await service.reset_password(clinic.id, user.id, AdminPasswordReset(new_password="newpassword1"))
+
+    assert verify_password("newpassword1", updated.password_hash) is True
+    assert verify_password("oldpassword1", updated.password_hash) is False
+    assert updated.force_password_change is True
+
+
+async def test_reset_password_unknown_user_raises_404(db_session, clinic):
+    service = UserService(db_session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await service.reset_password(clinic.id, 999999, AdminPasswordReset(new_password="newpassword1"))
+
+    assert exc_info.value.status_code == 404

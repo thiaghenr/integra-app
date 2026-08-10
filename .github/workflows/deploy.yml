@@ -1,87 +1,151 @@
 name: Build & Deploy
 
-# Manual dispatch only for now — this repo doesn't yet have an established
-# branch-per-environment convention, so promotion to dev/staging/prod is an
-# explicit choice rather than automatic on push. Revisit once a branching
-# strategy and hosting target are decided.
+# Push em main = deploy automatico em dev. workflow_dispatch continua
+# disponivel pra rodar manualmente contra outro ambiente (ex: prod, quando
+# for reativado no CDK -- hoje so dev existe de verdade na infra).
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
         description: Target environment
         type: choice
         required: true
+        default: dev
         options:
           - dev
           - staging
           - prod
 
 env:
-  REGISTRY: ghcr.io
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+  ECR_REPOSITORY: integra-app
+  ECS_CLUSTER: integra-cluster
 
 permissions:
   contents: read
-  packages: write
+  id-token: write # necessario pro OIDC assumir a AWS_DEPLOY_ROLE_ARN, sem access key fixa
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
     outputs:
-      image: ${{ steps.image.outputs.image }}
+      image-tag: ${{ steps.tags.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Lowercase image name
-        id: image
-        run: |
-          IMAGE="${REGISTRY}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login no ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Definir tags da imagem
+        id: tags
+        run: echo "tag=${{ env.ENVIRONMENT }}-${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ steps.image.outputs.image }}:${{ inputs.environment }}-${{ github.sha }}
-            ${{ steps.image.outputs.image }}:${{ inputs.environment }}-latest
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.tags.outputs.tag }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.ENVIRONMENT }}-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  migrate:
+  # Nao ha job separado de "migrate" aqui de proposito: o RDS vive numa
+  # subnet privada sem rota de internet, entao um runner do GitHub Actions
+  # nunca conseguiria conectar nele diretamente. As migrations rodam dentro
+  # do proprio container (entrypoint.sh chama "alembic upgrade head" antes
+  # de subir o uvicorn), ja de dentro da VPC -- acontece automaticamente no
+  # passo de deploy abaixo, quando a task nova sobe.
+
+  deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    # Selecting the GitHub Environment here is what makes ${{ secrets.* }} below
-    # resolve to that environment's own secrets (configured under
-    # Settings → Environments → dev/staging/prod in this repo).
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || 'dev' }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install dependencies
-        run: pip install .
+      - name: Forcar novo deployment no ECS
+        run: |
+          aws ecs update-service \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --service "integra-${{ env.ENVIRONMENT }}" \
+            --force-new-deployment
 
-      - name: Apply migrations against ${{ inputs.environment }}
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: alembic upgrade head
+      - name: Esperar o service estabilizar
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --services "integra-${{ env.ENVIRONMENT }}"
 
-  # No further "deploy to a running server" step yet — there's no hosting
-  # target defined for this project (ECS/Fargate, a VPS, Fly.io, etc.). Once
-  # one is chosen, add a job here that pulls
-  # ${{ needs.build-and-push.outputs.image }}:${{ inputs.environment }}-${{ github.sha }}
-  # and rolls it out, using that environment's remaining secrets
-  # (SECRET_KEY, CHATBOT_API_KEY, AWS_*, etc.).
+      # NOTA: pega o IP so da primeira task. Funciona bem pra dev (1 task).
+      # Se/quando prod (2 tasks) for reativado, isso precisa virar um
+      # multivalue answer routing no Route 53 com um registro por IP --
+      # nao um unico UPSERT como esse.
+      - name: Descobrir IP publico da task e atualizar Route 53
+        run: |
+          TASK_ARN=$(aws ecs list-tasks \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --service-name "integra-${{ env.ENVIRONMENT }}" \
+            --desired-status RUNNING \
+            --query 'taskArns[0]' --output text)
+
+          ENI_ID=$(aws ecs describe-tasks \
+            --cluster "${{ env.ECS_CLUSTER }}" \
+            --tasks "$TASK_ARN" \
+            --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value | [0]" \
+            --output text)
+
+          PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+            --network-interface-ids "$ENI_ID" \
+            --query 'NetworkInterfaces[0].Association.PublicIp' \
+            --output text)
+
+          echo "Task publica em: $PUBLIC_IP"
+
+          jq -n \
+            --arg name "${{ vars.APP_DOMAIN }}" \
+            --arg ip "$PUBLIC_IP" \
+            --arg comment "Atualizado pelo GitHub Actions apos deploy (${{ github.sha }})" \
+            '{
+              Comment: $comment,
+              Changes: [{
+                Action: "UPSERT",
+                ResourceRecordSet: {
+                  Name: $name,
+                  Type: "A",
+                  TTL: 60,
+                  ResourceRecords: [{Value: $ip}]
+                }
+              }]
+            }' > /tmp/change-batch.json
+
+          aws route53 change-resource-record-sets \
+            --hosted-zone-id "${{ vars.HOSTED_ZONE_ID }}" \
+            --change-batch file:///tmp/change-batch.json
+
+# Configuracao necessaria (Settings -> Environments -> dev, e prod quando
+# for reativado):
+#   Variables (nao sao segredo, nao precisam de Secret):
+#     AWS_DEPLOY_ROLE_ARN  -- saida "GithubDeployRoleArn" do `cdk deploy`
+#     APP_DOMAIN           -- ex.: dev.integra.example.com
+#     HOSTED_ZONE_ID        -- id do hosted zone Route 53 (ex.: Z0123456789ABCDEFGHI)
+#   Nao ha secrets de fato necessarios aqui: sem access key da AWS (OIDC),
+#   sem DATABASE_URL (RDS so e alcancavel de dentro da VPC), sem SECRET_KEY/
+#   CHATBOT_API_KEY (injetados direto pelo ECS via Secrets Manager).

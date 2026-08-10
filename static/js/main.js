@@ -21,6 +21,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Back button — reuse browser history when it has an in-app previous
+  // page, otherwise fall back to the dashboard (e.g. first page after login).
+  const backButton = document.getElementById("backButton");
+  if (backButton) {
+    backButton.addEventListener("click", () => {
+      if (document.referrer && new URL(document.referrer).origin === location.origin) {
+        history.back();
+      } else {
+        location.href = "/dashboard";
+      }
+    });
+  }
+
   // Confirm destructive actions
   document.querySelectorAll("form[data-confirm]").forEach((form) => {
     form.addEventListener("submit", (e) => {

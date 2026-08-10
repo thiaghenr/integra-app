@@ -6,6 +6,7 @@
 <div class="form-wrapper">
   {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 
+  {% if user.role.value != 'professional' or own_professional_id %}
   <form method="post" action="/appointments/new">
     <div class="form-group">
       <label for="patient_id">Paciente <span style="color:var(--danger)">*</span></label>
@@ -16,6 +17,13 @@
         {% endfor %}
       </select>
     </div>
+    {% if user.role.value == 'professional' %}
+    <input type="hidden" name="professional_id" value="{{ own_professional_id }}" />
+    <div class="form-group">
+      <label>Profissional</label>
+      <p>{{ user.full_name }}</p>
+    </div>
+    {% else %}
     <div class="form-group">
       <label for="professional_id">Profissional <span style="color:var(--danger)">*</span></label>
       <select id="professional_id" name="professional_id" class="form-control" required>
@@ -25,6 +33,7 @@
         {% endfor %}
       </select>
     </div>
+    {% endif %}
     <div class="form-group">
       <label for="scheduled_at">Data e Hora <span style="color:var(--danger)">*</span></label>
       <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="form-control" required />
@@ -42,5 +51,6 @@
       <a href="/appointments" class="btn btn-secondary">Cancelar</a>
     </div>
   </form>
+  {% endif %}
 </div>
 {% endblock %}

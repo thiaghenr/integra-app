@@ -7,7 +7,7 @@ from app.backend.models.phone_list import PhoneList
 from app.backend.models.user import User
 from app.backend.repositories.phone_list_repository import PhoneListRepository
 from app.backend.repositories.user_repository import UserRepository
-from app.backend.schemas.user import UserCreate, UserUpdate
+from app.backend.schemas.user import AdminPasswordReset, UserCreate, UserUpdate
 
 
 class UserService:
@@ -64,4 +64,14 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password")
         user.password_hash = hash_password(new_password)
         user.force_password_change = False
+        return await self.repo.update(user)
+
+    async def reset_password(self, clinic_id: int | None, user_id: int, data: AdminPasswordReset) -> User:
+        """Admin-initiated reset (e.g. the user lost their password) — no current password needed.
+
+        Forces a change on next login so the admin-chosen value isn't kept long-term.
+        """
+        user = await self.get(clinic_id, user_id)
+        user.password_hash = hash_password(data.new_password)
+        user.force_password_change = True
         return await self.repo.update(user)

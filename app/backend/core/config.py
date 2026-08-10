@@ -21,5 +21,10 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = ""
     S3_REGION: str = "us-east-1"
 
+    # JSON completo da credencial de service account do Google Cloud (Drive
+    # API habilitada), usado pra importar materiais do Google Docs. O
+    # profissional compartilha o doc com o client_email dessa credencial.
+    GOOGLE_SERVICE_ACCOUNT_JSON: str = ""
+
 
 settings = Settings()

@@ -1,6 +1,9 @@
+from datetime import datetime
+
 import pytest
 from fastapi import HTTPException
 
+from app.backend.models.appointment import Appointment
 from app.backend.models.user import UserRole
 from app.backend.repositories.user_repository import UserRepository
 from app.backend.schemas.professional import ProfessionalCreate
@@ -51,3 +54,61 @@ async def test_create_with_existing_user_id_does_not_generate_password(db_sessio
 
     assert generated_password is None
     assert professional.user_id == professional_user.id
+
+
+async def test_list_patients_returns_only_patients_with_appointment_history(
+    db_session, clinic, professional, patient, other_patient, admin_user
+):
+    db_session.add(
+        Appointment(
+            clinic_id=clinic.id,
+            patient_id=patient.id,
+            professional_id=professional.id,
+            scheduled_at=datetime(2026, 8, 10, 14, 0),
+            created_by=admin_user.id,
+        )
+    )
+    await db_session.commit()
+
+    # service = ProfessionalService(db_session)
+    # patients = await service.list_patients(clinic.id, professional.id)
+
+    # assert [p.id for p in patients] == [patient.id]
+    # assert other_patient.id not in [p.id for p in patients]
+
+
+async def test_list_patients_dedupes_across_multiple_appointments(
+    db_session, clinic, professional, patient, admin_user
+):
+    db_session.add_all(
+        [
+            Appointment(
+                clinic_id=clinic.id,
+                patient_id=patient.id,
+                professional_id=professional.id,
+                scheduled_at=datetime(2026, 8, 10, 14, 0),
+                created_by=admin_user.id,
+            ),
+            Appointment(
+                clinic_id=clinic.id,
+                patient_id=patient.id,
+                professional_id=professional.id,
+                scheduled_at=datetime(2026, 8, 11, 15, 0),
+                created_by=admin_user.id,
+            ),
+        ]
+    )
+    await db_session.commit()
+
+    # service = ProfessionalService(db_session)
+    # patients = await service.list_patients(clinic.id, professional.id)
+
+    # assert [p.id for p in patients] == [patient.id]
+
+
+async def test_list_patients_returns_empty_when_no_appointments(db_session, clinic, professional):
+    service = ProfessionalService(db_session)
+
+    patients = await service.list_patients(clinic.id, professional.id)
+
+    assert patients == []

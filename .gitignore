@@ -12,5 +12,8 @@ build/
 .ruff_cache/
 .cache/
 *.log
+backups/
+cdk.out/
 migrations/versions/*.py
 !migrations/versions/.gitkeep
+projeto-sei-google.json

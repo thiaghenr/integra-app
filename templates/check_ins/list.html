@@ -26,7 +26,7 @@
   <table>
     <thead>
       <tr>
-        {% if user.role.value in ['superadmin', 'admin'] %}
+        {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
         <th>Paciente</th>
         {% endif %}
         <th>Intensidade</th>
@@ -40,8 +40,12 @@
     <tbody>
       {% for c in check_ins %}
       <tr>
-        {% if user.role.value in ['superadmin', 'admin'] %}
-        <td>{{ patients_by_id[c.patient_id].full_name if c.patient_id in patients_by_id else '—' }}</td>
+        {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+        <td>
+          {% if patients_by_id.get(c.patient_id) %}
+            <a href="/patients/{{ c.patient_id }}">{{ patients_by_id[c.patient_id].full_name }}</a>
+          {% else %}—{% endif %}
+        </td>
         {% endif %}
         <td>{{ c.intensity }}/10</td>
         <td>{{ emotions_by_check_in.get(c.id) | join(', ') if emotions_by_check_in.get(c.id) else '—' }}</td>
@@ -51,7 +55,7 @@
         <td class="actions"><a href="/check-ins/{{ c.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
       </tr>
       {% else %}
-      <tr><td colspan="{{ 7 if user.role.value in ['superadmin', 'admin'] else 6 }}" style="text-align:center;color:var(--muted);padding:24px;">Nenhum check-in encontrado.</td></tr>
+      <tr><td colspan="{{ 7 if user.role.value in ['superadmin', 'admin', 'professional'] else 6 }}" style="text-align:center;color:var(--muted);padding:24px;">Nenhum check-in encontrado.</td></tr>
       {% endfor %}
     </tbody>
   </table>

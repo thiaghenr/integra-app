@@ -24,7 +24,7 @@ async def list_family_members(
 ):
     scope = clinic_scope(current_user)
     service = FamilyMemberService(session)
-    family_members = await service.list(scope, patient_id=patient_id)
+    family_members = await service.list(scope, current_user, patient_id=patient_id)
 
     patient_ids = sorted({f.patient_id for f in family_members})
     patients_by_id = {p.id: p for p in await PatientRepository(session).get_by_ids(scope, patient_ids)}
@@ -89,7 +89,7 @@ async def edit_family_member_form(
 ):
     scope = clinic_scope(current_user)
     service = FamilyMemberService(session)
-    family_member = await service.get(scope, family_member_id)
+    family_member = await service.get(scope, family_member_id, current_user)
     patient = await PatientRepository(session).get_by_clinic(scope, family_member.patient_id)
     return _t(request).TemplateResponse(
         request,
@@ -118,9 +118,9 @@ async def update_family_member(
             phone=phone or None,
             email=email or None,
         )
-        await service.update(scope, family_member_id, data)
+        await service.update(scope, family_member_id, data, current_user)
     except Exception as e:
-        family_member = await service.get(scope, family_member_id)
+        family_member = await service.get(scope, family_member_id, current_user)
         patient = await PatientRepository(session).get_by_clinic(scope, family_member.patient_id)
         return _t(request).TemplateResponse(
             request,
@@ -137,5 +137,5 @@ async def delete_family_member(
     session: AsyncSession = Depends(get_db),
 ):
     service = FamilyMemberService(session)
-    await service.soft_delete(clinic_scope(current_user), family_member_id)
+    await service.soft_delete(clinic_scope(current_user), family_member_id, current_user)
     return RedirectResponse("/family-members", status_code=302)

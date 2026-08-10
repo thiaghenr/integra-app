@@ -53,7 +53,7 @@ async def list_appointments(
 @router.get("/new", response_class=HTMLResponse)
 async def new_appointment_form(
     request: Request,
-    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist)),
+    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional)),
     session: AsyncSession = Depends(get_db),
 ):
     scope = clinic_scope(current_user)
@@ -61,10 +61,23 @@ async def new_appointment_form(
     professionals = await prof_repo.list_by_clinic(scope)
     patient_repo = PatientRepository(session)
     patients = await patient_repo.list_by_clinic(scope)
+    own_professional_id = None
+    error = None
+    if current_user.role == UserRole.professional:
+        own_prof = await prof_repo.get_by_user_id(current_user.id)
+        own_professional_id = own_prof.id if own_prof else None
+        if own_professional_id is None:
+            error = "Nenhum perfil de profissional vinculado a esta conta."
     return _t(request).TemplateResponse(
         request,
         "appointments/create.html",
-        {"user": current_user, "professionals": professionals, "patients": patients, "error": None},
+        {
+            "user": current_user,
+            "professionals": professionals,
+            "patients": patients,
+            "own_professional_id": own_professional_id,
+            "error": error,
+        },
     )
 
 
@@ -76,7 +89,7 @@ async def create_appointment(
     scheduled_at: str = Form(...),
     duration_minutes: int = Form(50),
     notes: str = Form(None),
-    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist)),
+    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional)),
     session: AsyncSession = Depends(get_db),
 ):
     from datetime import datetime
@@ -97,10 +110,20 @@ async def create_appointment(
         professionals = await prof_repo.list_by_clinic(scope)
         patient_repo = PatientRepository(session)
         patients = await patient_repo.list_by_clinic(scope)
+        own_professional_id = None
+        if current_user.role == UserRole.professional:
+            own_prof = await prof_repo.get_by_user_id(current_user.id)
+            own_professional_id = own_prof.id if own_prof else None
         return _t(request).TemplateResponse(
             request,
             "appointments/create.html",
-            {"user": current_user, "professionals": professionals, "patients": patients, "error": str(e)},
+            {
+                "user": current_user,
+                "professionals": professionals,
+                "patients": patients,
+                "own_professional_id": own_professional_id,
+                "error": str(e),
+            },
         )
     return RedirectResponse("/appointments", status_code=302)
 
@@ -139,7 +162,7 @@ async def appointment_detail(
 async def edit_appointment_form(
     request: Request,
     appointment_id: int,
-    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist)),
+    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional)),
     session: AsyncSession = Depends(get_db),
 ):
     scope = clinic_scope(current_user)
@@ -173,7 +196,7 @@ async def update_appointment(
     duration_minutes: int = Form(50),
     status: str = Form(...),
     notes: str = Form(None),
-    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist)),
+    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional)),
     session: AsyncSession = Depends(get_db),
 ):
     from datetime import datetime
@@ -214,7 +237,7 @@ async def update_appointment(
 @router.post("/{appointment_id}/cancel")
 async def cancel_appointment(
     appointment_id: int,
-    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist)),
+    current_user: User = Depends(require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional)),
     session: AsyncSession = Depends(get_db),
 ):
     service = AppointmentService(session)

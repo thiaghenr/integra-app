@@ -3,6 +3,173 @@
 {% block page_title %}Início{% endblock %}
 
 {% block content %}
+{% if user.role.value == 'paciente' %}
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Meus Check-ins</div>
+    <a href="/check-ins/new" class="btn btn-primary btn-sm">+ Novo</a>
+  </div>
+  {% if check_ins %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Intensidade</th>
+          <th>Emoções</th>
+          <th>Sinais Corporais</th>
+          <th>Observações</th>
+          <th>Data/Hora</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in check_ins %}
+        <tr>
+          <td>{{ c.intensity }}/10</td>
+          <td>{{ emotions_by_check_in.get(c.id) | join(', ') if emotions_by_check_in.get(c.id) else '—' }}</td>
+          <td>{{ body_signals_by_check_in.get(c.id) | join(', ') if body_signals_by_check_in.get(c.id) else '—' }}</td>
+          <td>{{ c.notes or '—' }}</td>
+          <td>{{ c.checked_in_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td class="actions"><a href="/check-ins/{{ c.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total_check_in_pages > 1 %}
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+    {% if check_in_page > 1 %}
+    <a href="/dashboard?page={{ check_in_page - 1 }}" class="btn btn-secondary btn-sm">« Anterior</a>
+    {% endif %}
+    <span style="align-self:center;color:var(--muted);">Página {{ check_in_page }} de {{ total_check_in_pages }}</span>
+    {% if check_in_page < total_check_in_pages %}
+    <a href="/dashboard?page={{ check_in_page + 1 }}" class="btn btn-secondary btn-sm">Próxima »</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty-state">
+    <p>Nenhum check-in ainda.</p>
+    <a href="/check-ins/new" class="btn btn-primary">Fazer Check-in</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Meus Agendamentos</div>
+  </div>
+  {% if appointments %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Data/Hora</th>
+          <th>Profissional</th>
+          <th>Duração</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in appointments %}
+        <tr>
+          <td>{{ a.scheduled_at.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{% if prof_map.get(a.professional_id) %}{{ prof_map[a.professional_id].full_name }}{% else %}#{{ a.professional_id }}{% endif %}</td>
+          <td>{{ a.duration_minutes }} min</td>
+          <td><span class="badge badge-{{ a.status.value }}">{{ a.status.value | status_pt }}</span></td>
+          <td class="actions"><a href="/appointments/{{ a.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Nenhum agendamento ainda.</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Minhas Metas</div>
+  </div>
+  {% if goals %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Profissional</th>
+          <th>Status</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in goals %}
+        <tr>
+          <td>{{ g.title }}</td>
+          <td>{% if prof_map.get(g.professional_id) %}{{ prof_map[g.professional_id].full_name }}{% else %}#{{ g.professional_id }}{% endif %}</td>
+          <td><span class="badge badge-{{ g.status.value }}">{{ g.status.value | status_pt }}</span></td>
+          <td>{{ g.start_date or '—' }}</td>
+          <td>{{ g.end_date or '—' }}</td>
+          <td class="actions"><a href="/goals/{{ g.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Nenhuma meta ainda.</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Minhas Missões</div>
+  </div>
+  {% if missions %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Profissional</th>
+          <th>Status</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in missions %}
+        <tr>
+          <td>{{ m.title }}</td>
+          <td>{% if prof_map.get(m.professional_id) %}{{ prof_map[m.professional_id].full_name }}{% else %}#{{ m.professional_id }}{% endif %}</td>
+          <td><span class="badge badge-{{ m.status.value }}">{{ m.status.value | status_pt }}</span></td>
+          <td>{{ m.start_date or '—' }}</td>
+          <td>{{ m.end_date or '—' }}</td>
+          <td class="actions"><a href="/missions/{{ m.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>Nenhuma missão ainda.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% else %}
+
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-value">{{ today_appointments | length }}</div>
@@ -60,4 +227,5 @@
   </div>
   {% endif %}
 </div>
+{% endif %}
 {% endblock %}

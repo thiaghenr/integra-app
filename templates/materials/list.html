@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Materiais — Integra{% endblock %}
+{% block page_title %}Materiais{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Materiais</h2>
+  {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+  <a href="/materials/new" class="btn btn-primary">+ Importar do Google Docs</a>
+  {% endif %}
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Nível</th>
+        <th>Importado em</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in materials %}
+      <tr>
+        <td><a href="/materials/{{ m.id }}">{{ m.title }}</a></td>
+        <td>{{ m.level }}</td>
+        <td>{{ m.imported_at.strftime('%d/%m/%Y') }}</td>
+        <td class="actions">
+          {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+          <form method="post" action="/materials/{{ m.id }}/delete" data-confirm="Arquivar este material?">
+            <button type="submit" class="btn btn-danger btn-sm">Arquivar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">Nenhum material disponível.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

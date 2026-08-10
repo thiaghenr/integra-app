@@ -27,7 +27,9 @@
       {% for g in goals %}
       <tr>
         <td>
-          {% if patient_map.get(g.patient_id) %}
+          {% if user.role.value == 'paciente' %}
+            {{ patient_map[g.patient_id].full_name if patient_map.get(g.patient_id) else '#' + g.patient_id|string }}
+          {% elif patient_map.get(g.patient_id) %}
             <a href="/patients/{{ g.patient_id }}">{{ patient_map[g.patient_id].full_name }}</a>
           {% else %}#{{ g.patient_id }}{% endif %}
         </td>

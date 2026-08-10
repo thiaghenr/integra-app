@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
   <h2>Agendamentos</h2>
-  {% if user.role.value in ['admin', 'receptionist'] %}
+  {% if user.role.value in ['admin', 'receptionist', 'professional'] %}
   <a href="/appointments/new" class="btn btn-primary">+ Novo Agendamento</a>
   {% endif %}
 </div>
@@ -37,7 +37,9 @@
       <tr>
         <td>{{ a.scheduled_at.strftime('%d/%m/%Y %H:%M') }}</td>
         <td>
-          {% if patient_map.get(a.patient_id) %}
+          {% if user.role.value == 'paciente' %}
+            {{ patient_map[a.patient_id].full_name if patient_map.get(a.patient_id) else '#' + a.patient_id|string }}
+          {% elif patient_map.get(a.patient_id) %}
             <a href="/patients/{{ a.patient_id }}">{{ patient_map[a.patient_id].full_name }}</a>
           {% else %}#{{ a.patient_id }}{% endif %}
         </td>
@@ -49,7 +51,7 @@
         <td><span class="badge badge-{{ a.status.value }}">{{ a.status.value | status_pt }}</span></td>
         <td class="actions">
           <a href="/appointments/{{ a.id }}" class="btn btn-secondary btn-sm">Ver</a>
-          {% if user.role.value in ['admin', 'receptionist'] %}
+          {% if user.role.value in ['admin', 'receptionist', 'professional'] %}
           <a href="/appointments/{{ a.id }}/edit" class="btn btn-secondary btn-sm">Editar</a>
           {% endif %}
         </td>

@@ -6,8 +6,10 @@ from fastapi import HTTPException, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.backend.models.appointment import Appointment, AppointmentStatus
+from app.backend.models.patient import Patient
 from app.backend.models.user import User, UserRole
 from app.backend.repositories.appointment_repository import AppointmentRepository
+from app.backend.repositories.patient_repository import PatientRepository
 from app.backend.repositories.professional_repository import ProfessionalRepository
 from app.backend.schemas.appointment import AppointmentCreate, AppointmentUpdate
 
@@ -16,16 +18,29 @@ class AppointmentService:
     def __init__(self, session: AsyncSession) -> None:
         self.repo = AppointmentRepository(session)
         self.prof_repo = ProfessionalRepository(session)
+        self.patient_repo = PatientRepository(session)
 
     async def _professional_id_for_user(self, user: User) -> int | None:
         prof = await self.prof_repo.get_by_user_id(user.id)
         return prof.id if prof else None
+
+    async def _own_patient(self, current_user: User) -> Patient:
+        patient = await self.patient_repo.get_by_user_id(current_user.id)
+        if not patient:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="No patient profile linked to this account"
+            )
+        return patient
 
     async def list(
         self, clinic_id: int | None, current_user: User, professional_id: int | None = None
     ) -> list[Appointment]:
         if current_user.role == UserRole.professional:
             professional_id = await self._professional_id_for_user(current_user)
+            return await self.repo.list_by_clinic(clinic_id, professional_id=professional_id)
+        if current_user.role == UserRole.paciente:
+            patient = await self._own_patient(current_user)
+            return await self.repo.list_by_clinic(clinic_id, patient_id=patient.id)
         return await self.repo.list_by_clinic(clinic_id, professional_id=professional_id)
 
     async def list_today(self, clinic_id: int | None) -> list[Appointment]:
@@ -39,13 +54,25 @@ class AppointmentService:
             own_prof_id = await self._professional_id_for_user(current_user)
             if appt.professional_id != own_prof_id:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        if current_user.role == UserRole.paciente:
+            patient = await self._own_patient(current_user)
+            if appt.patient_id != patient.id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
         return appt
 
     async def create(self, clinic_id: int | None, data: AppointmentCreate, current_user: User) -> Appointment:
+        payload = data.model_dump()
+        if current_user.role == UserRole.professional:
+            own_prof_id = await self._professional_id_for_user(current_user)
+            if not own_prof_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="No professional profile linked to this account"
+                )
+            payload["professional_id"] = own_prof_id
         appt = Appointment(
             clinic_id=clinic_id,
             created_by=current_user.id,
-            **data.model_dump(),
+            **payload,
         )
         return await self.repo.create(appt)
 
@@ -53,7 +80,12 @@ class AppointmentService:
         self, clinic_id: int | None, appointment_id: int, data: AppointmentUpdate, current_user: User
     ) -> Appointment:
         appt = await self.get(clinic_id, appointment_id, current_user)
-        for field, value in data.model_dump(exclude_none=True).items():
+        updates = data.model_dump(exclude_none=True)
+        if current_user.role == UserRole.professional:
+            # get() above already confirmed this appointment is theirs; don't let them
+            # reassign it to a different professional via the edit form.
+            updates.pop("professional_id", None)
+        for field, value in updates.items():
             setattr(appt, field, value)
         appt.updated_at = datetime.utcnow()
         return await self.repo.update(appt)

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Importar material — Integra{% endblock %}
+{% block page_title %}Importar material do Google Docs{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <p style="color:var(--muted);margin-bottom:16px;">
+    Compartilhe o documento com a service account da clínica antes de importar (peça o e-mail
+    ao administrador). O conteúdo é copiado pro sistema no momento do import — editar o Google
+    Doc depois não atualiza o material automaticamente, é preciso reimportar.
+  </p>
+
+  <form method="post" action="/materials/new">
+    <div class="form-group">
+      <label for="title">Título <span style="color:var(--danger)">*</span></label>
+      <input type="text" id="title" name="title" class="form-control" required />
+    </div>
+    <div class="form-group">
+      <label for="level">Nível <span style="color:var(--danger)">*</span></label>
+      <input type="number" id="level" name="level" class="form-control" min="1" value="1" required />
+    </div>
+    <div class="form-group">
+      <label for="source_url">Link do Google Docs <span style="color:var(--danger)">*</span></label>
+      <input
+        type="url"
+        id="source_url"
+        name="source_url"
+        class="form-control"
+        required
+        placeholder="https://docs.google.com/document/d/..."
+      />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Importar</button>
+      <a href="/materials" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

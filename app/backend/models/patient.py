@@ -17,6 +17,7 @@ class Patient(SQLModel, table=True):
     email: str | None = None
     address: str | None = None
     notes: str | None = None
+    level: int = Field(default=1)
     is_active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

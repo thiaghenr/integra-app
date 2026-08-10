@@ -23,11 +23,16 @@
         <a href="/appointments" class="nav-link {% if '/appointments' in request.url.path %}active{% endif %}">
           <span class="nav-icon">📅</span> Agendamentos
         </a>
+        {% if user.role.value != 'paciente' %}
         <a href="/patients" class="nav-link {% if '/patients' in request.url.path %}active{% endif %}">
           <span class="nav-icon">👤</span> Pacientes
         </a>
+        {% endif %}
         <a href="/family-members" class="nav-link {% if '/family-members' in request.url.path %}active{% endif %}">
           <span class="nav-icon">👪</span> Familiares
+        </a>
+        <a href="/materials" class="nav-link {% if '/materials' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">📚</span> Materiais
         </a>
         {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
         <a href="/medical-records" class="nav-link {% if '/medical-records' in request.url.path %}active{% endif %}">
@@ -42,15 +47,17 @@
           <span class="nav-icon">🚀</span> Missões
         </a>
         {% endif %}
+        {% if user.role.value != 'paciente' %}
         <a href="/professionals" class="nav-link {% if '/professionals' in request.url.path %}active{% endif %}">
           <span class="nav-icon">🩺</span> Profissionais
         </a>
+        {% endif %}
         {% if user.role.value in ['superadmin', 'admin'] %}
         <a href="/users" class="nav-link {% if '/users' in request.url.path %}active{% endif %}">
           <span class="nav-icon">👥</span> Usuários
         </a>
         {% endif %}
-        {% if user.role.value in ['superadmin', 'admin', 'paciente'] %}
+        {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
         <a href="/check-ins" class="nav-link {% if '/check-ins' in request.url.path %}active{% endif %}">
           <span class="nav-icon">💬</span> Check-in
         </a>
@@ -85,6 +92,9 @@
       <header class="top-bar">
         <div class="top-bar-left">
           <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <button class="btn-back" id="backButton" type="button" title="Voltar" aria-label="Voltar">
+            <span class="btn-back-icon" aria-hidden="true">←</span> Voltar
+          </button>
           <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
         </div>
         <div class="top-bar-right">

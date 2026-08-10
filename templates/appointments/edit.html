@@ -15,6 +15,13 @@
         {% endfor %}
       </select>
     </div>
+    {% if user.role.value == 'professional' %}
+    <input type="hidden" name="professional_id" value="{{ appointment.professional_id }}" />
+    <div class="form-group">
+      <label>Profissional</label>
+      <p>{{ user.full_name }}</p>
+    </div>
+    {% else %}
     <div class="form-group">
       <label for="professional_id">Profissional</label>
       <select id="professional_id" name="professional_id" class="form-control" required>
@@ -23,6 +30,7 @@
         {% endfor %}
       </select>
     </div>
+    {% endif %}
     <div class="form-group">
       <label for="scheduled_at">Data e Hora</label>
       <input type="datetime-local" id="scheduled_at" name="scheduled_at" class="form-control"

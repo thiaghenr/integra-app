@@ -15,7 +15,7 @@
     {% if user.role.value in ['admin', 'receptionist'] %}
     <a href="/patients/{{ patient.id }}/edit" class="btn btn-secondary">Editar</a>
     {% endif %}
-    {% if user.role.value in ['admin', 'receptionist'] %}
+    {% if user.role.value in ['admin', 'receptionist', 'professional'] %}
     <a href="/appointments/new?patient_id={{ patient.id }}" class="btn btn-primary">+ Agendamento</a>
     {% endif %}
   </div>
@@ -59,7 +59,7 @@
 <div class="card">
   <div class="page-header" style="margin-bottom:16px;">
     <div class="card-title">Agendamentos ({{ appointments | length }})</div>
-    {% if user.role.value in ['admin', 'receptionist'] %}
+    {% if user.role.value in ['admin', 'receptionist', 'professional'] %}
     <a href="/appointments/new" class="btn btn-primary btn-sm">+ Novo</a>
     {% endif %}
   </div>

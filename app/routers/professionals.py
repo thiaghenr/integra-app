@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.backend.core.deps import clinic_scope, get_current_user, get_db, require_roles
+from app.backend.core.deps import clinic_scope, get_db, require_roles
 from app.backend.models.user import User, UserRole
 from app.backend.repositories.clinic_repository import ClinicRepository
 from app.backend.repositories.user_repository import UserRepository
@@ -19,7 +19,9 @@ def _t(request: Request):
 @router.get("", response_class=HTMLResponse)
 async def list_professionals(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional, UserRole.viewer)
+    ),
     session: AsyncSession = Depends(get_db),
 ):
     service = ProfessionalService(session)
@@ -94,7 +96,9 @@ async def create_professional(
 async def professional_detail(
     request: Request,
     professional_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_roles(UserRole.admin, UserRole.receptionist, UserRole.professional, UserRole.viewer)
+    ),
     session: AsyncSession = Depends(get_db),
 ):
     service = ProfessionalService(session)
