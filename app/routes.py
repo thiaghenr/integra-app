@@ -6,6 +6,7 @@ from app.routers import (
     check_ins,
     clinics,
     dashboard,
+    emotion_diary,
     emotions,
     family_members,
     goals,
@@ -35,6 +36,7 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(medical_records.router)
     app.include_router(clinics.router)
     app.include_router(check_ins.router)
+    app.include_router(emotion_diary.router)
     app.include_router(emotions.router)
     app.include_router(body_signals.router)
     app.include_router(family_members.router)

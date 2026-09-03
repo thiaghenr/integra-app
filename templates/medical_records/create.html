@@ -16,6 +16,17 @@
         {% endfor %}
       </select>
     </div>
+    {% if professionals %}
+    <div class="form-group">
+      <label for="professional_id">Profissional <span style="color:var(--danger)">*</span></label>
+      <select id="professional_id" name="professional_id" class="form-control" required>
+        <option value="">Selecione o profissional…</option>
+        {% for prof in professionals %}
+        <option value="{{ prof.id }}" {% if selected_professional_id == prof.id %}selected{% endif %}>{{ prof.name }} {{ prof.surname }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <div class="form-group">
       <label for="appointment_id">Consulta Vinculada (opcional)</label>
       <input type="number" id="appointment_id" name="appointment_id" class="form-control" placeholder="ID do agendamento" />

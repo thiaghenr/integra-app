@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Diário das Emoções — Integra{% endblock %}
+{% block page_title %}Diário das Emoções{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Diário das Emoções</h2>
+  {% if user.role.value == 'paciente' %}
+  <a href="/emotion-diary/new" class="btn btn-primary">+ Novo Registro</a>
+  {% endif %}
+</div>
+
+{% if user.role.value == 'superadmin' and creatable_patients %}
+<form method="get" action="/emotion-diary/new" class="search-bar">
+  <select name="patient_id" class="form-control" required>
+    <option value="">Selecione o paciente…</option>
+    {% for p in creatable_patients %}
+    <option value="{{ p.id }}">{{ p.full_name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary">+ Novo Registro</button>
+</form>
+{% endif %}
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+        <th>Paciente</th>
+        {% endif %}
+        <th>Emoção do Dia</th>
+        <th>Situação</th>
+        <th>Data</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
+        <td>
+          {% if patients_by_id.get(e.patient_id) %}
+            <a href="/patients/{{ e.patient_id }}">{{ patients_by_id[e.patient_id].full_name }}</a>
+          {% else %}—{% endif %}
+        </td>
+        {% endif %}
+        <td>{{ emotions_by_entry.get(e.id) | join(', ') if emotions_by_entry.get(e.id) else '—' }}</td>
+        <td>{{ e.situation[:60] }}{% if e.situation | length > 60 %}…{% endif %}</td>
+        <td>{{ e.entry_date.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td class="actions"><a href="/emotion-diary/{{ e.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="{{ 5 if user.role.value in ['superadmin', 'admin', 'professional'] else 4 }}" style="text-align:center;color:var(--muted);padding:24px;">Nenhum registro encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

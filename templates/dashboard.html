@@ -58,6 +58,53 @@
 
 <div class="card">
   <div class="page-header" style="margin-bottom:16px;">
+    <div class="card-title">Meu Diário das Emoções</div>
+    <a href="/emotion-diary/new" class="btn btn-primary btn-sm">+ Novo</a>
+  </div>
+  {% if diary_entries %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Emoção do Dia</th>
+          <th>Situação</th>
+          <th>Data/Hora</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in diary_entries %}
+        <tr>
+          <td>{{ emotions_by_diary_entry.get(e.id) | join(', ') if emotions_by_diary_entry.get(e.id) else '—' }}</td>
+          <td>{{ e.situation[:60] }}{% if e.situation | length > 60 %}…{% endif %}</td>
+          <td>{{ e.entry_date.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td class="actions"><a href="/emotion-diary/{{ e.id }}" class="btn btn-secondary btn-sm">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total_diary_pages > 1 %}
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+    {% if diary_page > 1 %}
+    <a href="/dashboard?diary_page={{ diary_page - 1 }}" class="btn btn-secondary btn-sm">« Anterior</a>
+    {% endif %}
+    <span style="align-self:center;color:var(--muted);">Página {{ diary_page }} de {{ total_diary_pages }}</span>
+    {% if diary_page < total_diary_pages %}
+    <a href="/dashboard?diary_page={{ diary_page + 1 }}" class="btn btn-secondary btn-sm">Próxima »</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty-state">
+    <p>Nenhum registro ainda.</p>
+    <a href="/emotion-diary/new" class="btn btn-primary">Fazer Registro</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:16px;">
     <div class="card-title">Meus Agendamentos</div>
   </div>
   {% if appointments %}

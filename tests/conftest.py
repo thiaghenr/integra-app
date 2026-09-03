@@ -11,8 +11,10 @@ import app.backend.models.check_in_body_signal  # noqa: F401
 import app.backend.models.check_in_emotion  # noqa: F401
 import app.backend.models.clinic  # noqa: F401
 import app.backend.models.emotion  # noqa: F401
+import app.backend.models.emotion_diary_entry  # noqa: F401
 import app.backend.models.family_member  # noqa: F401
 import app.backend.models.goal  # noqa: F401
+import app.backend.models.material  # noqa: F401
 import app.backend.models.medical_record  # noqa: F401
 import app.backend.models.mission  # noqa: F401
 import app.backend.models.patient  # noqa: F401

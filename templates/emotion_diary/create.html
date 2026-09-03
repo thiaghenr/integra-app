@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Novo Registro — Diário das Emoções — Integra{% endblock %}
+{% block page_title %}Novo Registro{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/emotion-diary/new">
+    {% if patient %}
+    <input type="hidden" name="patient_id" value="{{ patient.id }}" />
+    <div class="form-group">
+      <label>Paciente</label>
+      <p>{{ patient.full_name }}</p>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label>Emoção do dia <span style="color:var(--danger)">*</span></label>
+      <label style="display:block;font-weight:normal;margin-bottom:4px;"><input type="checkbox" name="emotion_joy" /> Alegria</label>
+      <label style="display:block;font-weight:normal;margin-bottom:4px;"><input type="checkbox" name="emotion_sadness" /> Tristeza</label>
+      <label style="display:block;font-weight:normal;margin-bottom:4px;"><input type="checkbox" name="emotion_fear" /> Medo</label>
+      <label style="display:block;font-weight:normal;margin-bottom:4px;"><input type="checkbox" name="emotion_anger" /> Raiva</label>
+      <label style="display:block;font-weight:normal;margin-bottom:4px;"><input type="checkbox" name="emotion_disgust" /> Nojo</label>
+      <label style="display:block;font-weight:normal;margin-bottom:4px;"><input type="checkbox" name="emotion_surprise" /> Surpresa</label>
+    </div>
+
+    <div class="form-group">
+      <label for="situation">Situação: O que aconteceu? <span style="color:var(--danger)">*</span></label>
+      <textarea id="situation" name="situation" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="feeling">Emoção: O que você sentiu? <span style="color:var(--danger)">*</span></label>
+      <textarea id="feeling" name="feeling" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="perception">Percepção: O que você acredita que despertou isso? <span style="color:var(--danger)">*</span></label>
+      <textarea id="perception" name="perception" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="thought">Pensamento: O que passou pela sua cabeça naquele momento? <span style="color:var(--danger)">*</span></label>
+      <textarea id="thought" name="thought" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="behavior">Comportamento: O que você fez ou teve que fazer? <span style="color:var(--danger)">*</span></label>
+      <textarea id="behavior" name="behavior" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="reaction">Reação: O que você fez para enfrentar ou administrar a situação? <span style="color:var(--danger)">*</span></label>
+      <textarea id="reaction" name="reaction" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="outcome">Resultado: Isso ajudou, piorou ou não mudou? <span style="color:var(--danger)">*</span></label>
+      <textarea id="outcome" name="outcome" class="form-control" required></textarea>
+    </div>
+    <div class="form-group">
+      <label for="notes">Campo livre: Quer registrar mais alguma coisa sobre esse movimento?</label>
+      <textarea id="notes" name="notes" class="form-control"></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Salvar Registro</button>
+      <a href="/emotion-diary" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

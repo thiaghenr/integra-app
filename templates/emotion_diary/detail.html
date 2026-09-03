@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Diário das Emoções — Integra{% endblock %}
+{% block page_title %}Registro do Diário{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Registro do Diário</h2>
+  <a href="/emotion-diary" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div>
+      {% if patient %}
+      <div class="form-group">
+        <label>Paciente</label>
+        <p>{{ patient.full_name }}</p>
+      </div>
+      {% endif %}
+      <div class="form-group">
+        <label>Data/Hora</label>
+        <p>{{ entry.entry_date.strftime('%d/%m/%Y %H:%M') }}</p>
+      </div>
+    </div>
+    <div>
+      <div class="form-group">
+        <label>Emoção do dia</label>
+        <p>{{ emotions | join(', ') if emotions else '—' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group" style="margin-top:8px;">
+    <label>Situação: O que aconteceu?</label>
+    <p style="white-space:pre-line;">{{ entry.situation }}</p>
+  </div>
+  <div class="form-group">
+    <label>Emoção: O que você sentiu?</label>
+    <p style="white-space:pre-line;">{{ entry.feeling }}</p>
+  </div>
+  <div class="form-group">
+    <label>Percepção: O que você acredita que despertou isso?</label>
+    <p style="white-space:pre-line;">{{ entry.perception }}</p>
+  </div>
+  <div class="form-group">
+    <label>Pensamento: O que passou pela sua cabeça naquele momento?</label>
+    <p style="white-space:pre-line;">{{ entry.thought }}</p>
+  </div>
+  <div class="form-group">
+    <label>Comportamento: O que você fez ou teve que fazer?</label>
+    <p style="white-space:pre-line;">{{ entry.behavior }}</p>
+  </div>
+  <div class="form-group">
+    <label>Reação: O que você fez para enfrentar ou administrar a situação?</label>
+    <p style="white-space:pre-line;">{{ entry.reaction }}</p>
+  </div>
+  <div class="form-group">
+    <label>Resultado: Isso ajudou, piorou ou não mudou?</label>
+    <p style="white-space:pre-line;">{{ entry.outcome }}</p>
+  </div>
+  {% if entry.notes %}
+  <div class="form-group">
+    <label>Campo livre</label>
+    <p style="white-space:pre-line;">{{ entry.notes }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

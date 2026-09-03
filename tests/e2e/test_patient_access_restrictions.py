@@ -50,7 +50,7 @@ async def test_patient_cannot_access_professionals_list(client, e2e_patient_logi
     assert response.status_code == 403
 
 
-async def test_patient_dashboard_nav_only_shows_five_allowed_pages(client, e2e_patient_login):
+async def test_patient_dashboard_nav_only_shows_allowed_pages(client, e2e_patient_login):
     await _login(client, e2e_patient_login["email"], e2e_patient_login["password"])
 
     response = await client.get("/dashboard")
@@ -59,10 +59,15 @@ async def test_patient_dashboard_nav_only_shows_five_allowed_pages(client, e2e_p
     assert 'href="/appointments"' in response.text
     assert 'href="/family-members"' in response.text
     assert 'href="/goals"' in response.text
-    assert 'href="/missions"' in response.text
     assert 'href="/patients"' not in response.text
     assert 'href="/professionals"' not in response.text
     assert 'href="/check-ins"' not in response.text
+    # Missões nav link is intentionally hidden (duplicate of Metas, kept in
+    # code but not linked — see templates/base.html).
+    assert 'href="/missions"' not in response.text
+    # Diário das Emoções is staff-only in the sidebar; patients access it via
+    # the dashboard card instead (same pattern as check-ins).
+    assert 'href="/emotion-diary"' not in response.text
 
 
 async def test_patient_sees_only_own_family_members(client, e2e_clinic, e2e_patient_login):

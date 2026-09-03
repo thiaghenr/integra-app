@@ -5,6 +5,10 @@ from pydantic import BaseModel
 
 class MedicalRecordCreate(BaseModel):
     patient_id: int
+    # Required for admin/superadmin (they have no "own" professional identity to
+    # default to); ignored for a professional caller, who can only ever create a
+    # record under their own professional_id — see MedicalRecordService.create().
+    professional_id: int | None = None
     appointment_id: int | None = None
     title: str
     content: str

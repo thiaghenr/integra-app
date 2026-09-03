@@ -43,9 +43,7 @@
         <a href="/goals" class="nav-link {% if '/goals' in request.url.path %}active{% endif %}">
           <span class="nav-icon">🎯</span> Metas
         </a>
-        <a href="/missions" class="nav-link {% if '/missions' in request.url.path %}active{% endif %}">
-          <span class="nav-icon">🚀</span> Missões
-        </a>
+        {# Missões hidden: duplicate of Metas, kept in code, just not linked from the menu. #}
         {% endif %}
         {% if user.role.value != 'paciente' %}
         <a href="/professionals" class="nav-link {% if '/professionals' in request.url.path %}active{% endif %}">
@@ -60,6 +58,9 @@
         {% if user.role.value in ['superadmin', 'admin', 'professional'] %}
         <a href="/check-ins" class="nav-link {% if '/check-ins' in request.url.path %}active{% endif %}">
           <span class="nav-icon">💬</span> Check-in
+        </a>
+        <a href="/emotion-diary" class="nav-link {% if '/emotion-diary' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">📔</span> Diário das Emoções
         </a>
         {% endif %}
         {% if user.role.value in ['superadmin', 'admin'] %}

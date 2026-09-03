@@ -140,6 +140,7 @@ pillow==12.2.0
 pipx==1.0.0
 playa-pdf==1.1.0
 pluggy==1.6.0
+prometheus_client==0.26.0
 propcache==0.5.2
 proto-plus==1.28.3
 protobuf==7.35.0

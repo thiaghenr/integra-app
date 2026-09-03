@@ -38,12 +38,23 @@ class MedicalRecordService:
         return record
 
     async def create(self, clinic_id: int | None, data: MedicalRecordCreate, current_user: User) -> MedicalRecord:
-        professional_id = await self._professional_id_for_user(current_user)
+        if current_user.role == UserRole.professional:
+            # A professional can only ever create a record under their own
+            # professional_id — never trust a submitted value for this role.
+            professional_id = await self._professional_id_for_user(current_user)
+        else:
+            # admin/superadmin have no "own" professional identity, so the
+            # caller must pick one explicitly (see PRD: admin has unrestricted
+            # create/edit on medical records, not just "own").
+            professional_id = data.professional_id
+        if professional_id is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Professional is required")
+
         record = MedicalRecord(
             clinic_id=clinic_id,
             professional_id=professional_id,
             record_date=data.record_date or datetime.utcnow(),
-            **{k: v for k, v in data.model_dump().items() if k != "record_date"},
+            **{k: v for k, v in data.model_dump().items() if k not in ("record_date", "professional_id")},
         )
         return await self.repo.create(record)
 

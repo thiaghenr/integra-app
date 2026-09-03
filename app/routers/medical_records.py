@@ -49,10 +49,22 @@ async def new_record_form(
 ):
     patient_repo = PatientRepository(session)
     patients = await patient_repo.list_by_clinic(clinic_scope(current_user))
+
+    professionals = []
+    if current_user.role != UserRole.professional:
+        prof_repo = ProfessionalRepository(session)
+        professionals = await prof_repo.list_by_clinic(clinic_scope(current_user))
+
     return _t(request).TemplateResponse(
         request,
         "medical_records/create.html",
-        {"user": current_user, "patients": patients, "selected_patient_id": patient_id, "error": None},
+        {
+            "user": current_user,
+            "patients": patients,
+            "professionals": professionals,
+            "selected_patient_id": patient_id,
+            "error": None,
+        },
     )
 
 
@@ -60,6 +72,7 @@ async def new_record_form(
 async def create_record(
     request: Request,
     patient_id: int = Form(...),
+    professional_id: str = Form(None),
     appointment_id: str = Form(None),
     title: str = Form(...),
     content: str = Form(...),
@@ -70,6 +83,7 @@ async def create_record(
     try:
         data = MedicalRecordCreate(
             patient_id=patient_id,
+            professional_id=int(professional_id) if professional_id else None,
             appointment_id=int(appointment_id) if appointment_id else None,
             title=title,
             content=content,
@@ -78,10 +92,21 @@ async def create_record(
     except Exception as e:
         patient_repo = PatientRepository(session)
         patients = await patient_repo.list_by_clinic(clinic_scope(current_user))
+        professionals = []
+        if current_user.role != UserRole.professional:
+            prof_repo = ProfessionalRepository(session)
+            professionals = await prof_repo.list_by_clinic(clinic_scope(current_user))
         return _t(request).TemplateResponse(
             request,
             "medical_records/create.html",
-            {"user": current_user, "patients": patients, "selected_patient_id": patient_id, "error": str(e)},
+            {
+                "user": current_user,
+                "patients": patients,
+                "professionals": professionals,
+                "selected_patient_id": patient_id,
+                "selected_professional_id": int(professional_id) if professional_id else None,
+                "error": str(e),
+            },
         )
     return RedirectResponse("/medical-records", status_code=302)
 

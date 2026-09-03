@@ -171,15 +171,111 @@ Key rules:
 
 Every entity has a `clinic_id`. All queries must filter by the current user's `clinic_id` via `clinic_scope(current_user)` — never return cross-clinic data. Exception: `superadmin` (see Role-Based Access above), which is intentionally unscoped.
 
+## Observability
+
+Added after the Aug 8 2026 incident where the dev Postgres volume was wiped with no
+record of what happened — `docker volume inspect` showed a fresh `initdb` at a specific
+timestamp, but nothing in the app could say whether a migration, a manual command, or
+something else caused it. This is meant to make that diagnosable next time.
+
+### Log files
+
+Three JSON-lines log files at the repo root (`api.log`, `database.log`, `system.log`),
+one per named stdlib logger (`app.api`, `app.database`, `app.system` — see
+`app/backend/core/logging_config.py`). Each logger writes to its own
+`RotatingFileHandler` **and** a `StreamHandler` to stdout. The files are local/dev
+convenience only — production runs on ECS Fargate with ephemeral container storage, so
+stdout (captured by CloudWatch via the `awslogs` log driver, see
+`infra/cdk/integra_stack.py`) is what actually persists in prod. Every line is a single
+JSON object: `timestamp`, `level`, `logger`, `message`, `trace_id`, `request_id`,
+`span_id`, plus whatever extra fields the call site passed.
+
+- **`api.log`** — one line per HTTP request/response (method, path, status_code,
+  duration_ms, client_ip, user_id/user_role if authenticated, request/response body
+  size). WARNING for 4xx, ERROR for 5xx, INFO otherwise. Written by
+  `observability_middleware` in `app/main.py`.
+- **`database.log`** — one line per SQL query (statement — parameterized, never
+  interpolated values — duration_ms, rowcount), via SQLAlchemy `before_cursor_execute`/
+  `after_cursor_execute` events registered at the `Engine` class level in
+  `app/backend/core/db_logging.py` (covers every engine in the process, including test
+  engines). Any `DROP`, `TRUNCATE`, `DELETE` with no `WHERE`, or `ALTER TABLE ... DROP
+  COLUMN` is logged at WARNING regardless of `LOG_LEVEL` (see
+  `is_destructive_statement()`), and increments the `db_destructive_statements_total`
+  metric. Every `alembic upgrade`/`downgrade` run also logs here (`migrations/env.py`):
+  revision before/after, direction, timestamp, and the OS user who ran it — this is the
+  piece that would have told us whether a migration caused Aug 8's wipe, as opposed to a
+  manual command.
+- **`system.log`** — app startup/shutdown (startup includes the loaded config with
+  secrets masked — see `mask_settings()` in `config.py`), and every unhandled exception
+  (full traceback + trace_id) before the generic 500 is returned.
+
+**Known limitation, directly relevant to the Aug 8 incident:** all of the above only
+covers queries and commands that go through this app's own SQLAlchemy engine or its own
+`alembic` invocation. A `DROP DATABASE`, `docker compose down -v`, a manual `psql`
+session, or Docker Desktop's own volume lifecycle leaves **no trace** in these logs —
+they happen entirely outside the app process. If a future incident is caused by one of
+those, these logs will only be able to rule *in* or rule *out* whether the app itself did
+it; they can't see admin/infra-level Docker or DB operations that never call this app's
+code.
+
+### Trace correlation
+
+`app/backend/core/tracing.py` defines request-scoped `contextvars` (`trace_id`,
+`request_id`, `span_id`, plus `current_user_id`/`current_user_role`), readable from any
+layer — router, service, repository, DB event hook — without threading an ID through
+every function signature. `observability_middleware` (outermost middleware in
+`app/main.py`, so it runs before `session_middleware`) sets them per request:
+
+- `trace_id` — reused from an inbound `X-Trace-Id` header if present (for future
+  cross-service correlation with the WhatsApp bot), otherwise a fresh UUID4. Echoed back
+  in the response as `X-Trace-Id`.
+- `request_id` — always freshly generated per request, even when `trace_id` was
+  inherited from upstream.
+- `span_id` — regenerated per DB query (see `db_logging.py`'s cursor-execute hooks), so
+  nested operations within one request are distinguishable.
+
+Every log line in all three files, for the duration of a request, carries the same
+`trace_id` — a single request can be reconstructed by grepping one ID across
+`api.log`/`database.log`/`system.log`. **Implementation note if you touch the
+middleware:** the contextvars are deliberately *not* reset in a `finally` block around
+`call_next()` — an unhandled exception propagates past `observability_middleware` to
+Starlette's outer `ServerErrorMiddleware` (which is what actually invokes the
+`@app.exception_handler(Exception)` handler), and that handler needs `trace_id` still
+set when it runs. Skipping the reset on the error path is safe because each request runs
+in its own `asyncio.Task`, so nothing leaks across requests.
+
+### Metrics
+
+`GET /metrics` (`app/routers/metrics.py`) exposes Prometheus-formatted output via
+`prometheus_client`: `http_requests_total`/`http_request_duration_seconds` (by
+method/path/status), `db_queries_total`/`db_query_duration_seconds`, and
+`db_destructive_statements_total` — the metric that would have caught Aug 8 early via an
+alert, once alerting is wired up (not done yet; that's infra work, out of scope here).
+
+**Decision, not a default:** the route is only mounted when `ENV != "prod"`, with no
+auth — mirrors dev/test only for now. It is deliberately **not** wired behind
+`require_roles()`/JWT auth, and it is **not yet reachable in prod at all**. Revisit
+before this goes to production — either put it behind the existing role-based auth, or
+decide on a network-level restriction (e.g. no public route to it from outside the VPC)
+and implement that as infra work.
+
+### Config
+
+New env vars in `app/backend/core/config.py`: `LOG_LEVEL` (default `INFO`), `LOG_DIR`
+(default `.`, overridden by tests to a temp dir), `LOG_MAX_BYTES` (default 10MB),
+`LOG_BACKUP_COUNT` (default 5).
+
 ## Domain Models (SQLModel)
 
 `Clinic → User, Professional, Patient, Appointment, MedicalRecord`
 `Patient → CheckIn → Emotion, BodySignal (via CheckInEmotion / CheckInBodySignal join tables), FamilyMember`
+`Patient → EmotionDiaryEntry`
 `User → PhoneList` (phone-number lookup/dedup table, see phone normalization below)
 
 - `Professional.user_id` and `Patient.user_id` are optional FKs to `users.id` (links a login account to a professional/patient record) — not the other way around
 - `Appointment` status enum: `scheduled`, `confirmed`, `completed`, `cancelled`, `no_show`
 - `CheckIn` records a patient's self-reported intensity/notes at a point in time; `CheckInEmotion` and `CheckInBodySignal` are many-to-many join tables linking a check-in to clinic-defined `Emotion` and `BodySignal` taxonomy entries
+- `EmotionDiaryEntry` ("Diário das Emoções") is a separate, structured self-report journal entry (ABC-model style: situação/emoção/percepção/pensamento/comportamento/reação/resultado, plus free notes). Its "emoção do dia" checkboxes are a **fixed** set (Ekman's six basic emotions — `emotion_joy/sadness/fear/anger/disgust/surprise` boolean columns), unlike `CheckIn`'s clinic-configurable `Emotion` taxonomy — it is intentionally not built on top of `CheckIn`/`Emotion`. Same role/access pattern as `CheckIn` (`EmotionDiaryEntryService` mirrors `CheckInService`): only `paciente` creates their own (or `superadmin` on a patient's behalf), `professional` sees only patients they have appointment history with, `admin`/`superadmin` see all in clinic scope. Frontend-only like `CheckIn` — no `/api/v1/` route (see note below).
 - Soft deletes via `is_active` boolean (never hard delete users, patients, professionals)
 - `Clinic` model currently has: `name`, `slug`, `address`, `phone`, `is_active`, `created_at`. It does **not** yet have `business_hours`, `cancel_policy`, or `timezone` — the chatbot system prompt is documented (below and in the bot integration) as requiring these fields, so this is a known gap, not an intentional simplification. Confirm with the team before assuming either the code or this doc is the source of truth.
 
@@ -197,7 +293,7 @@ Use these helpers rather than ad hoc phone parsing anywhere a phone number is lo
 
 These routes are the integration surface with the WhatsApp chatbot. Keep them clean, versioned, and never break their contracts without updating the chatbot as well. `API_ENDPOINTS.md` at the repo root has a more detailed, chatbot-facing writeup of the same surface (auth flow, request/response shapes) — keep both in sync when routes change.
 
-Note: `CheckIn`, `Emotion`, `BodySignal`, and `FamilyMember` (see Domain Models) currently only have frontend routes (`app/routers/check_ins.py`, `emotions.py`, `body_signals.py`, `family_members.py`) — there are no `/api/v1/` equivalents yet and the chatbot does not consume them.
+Note: `CheckIn`, `Emotion`, `BodySignal`, `FamilyMember`, and `EmotionDiaryEntry` (see Domain Models) currently only have frontend routes (`app/routers/check_ins.py`, `emotions.py`, `body_signals.py`, `family_members.py`, `emotion_diary.py`) — there are no `/api/v1/` equivalents yet and the chatbot does not consume them.
 
 ### Auth
 | Method | Route | Description |
