@@ -99,8 +99,13 @@ def test_github_deploy_role_has_no_long_lived_credentials():
 
 def test_github_deploy_role_is_scoped_to_this_repo_and_main_branch():
     # A condicao StringLike do "sub" nao pode ser um wildcard solto tipo
-    # "repo:*" -- tem que apontar pro repo/branch especifico, senao qualquer
+    # "repo:*" -- tem que apontar pro repo especifico, senao qualquer
     # workflow de qualquer repo do GitHub poderia assumir essa role.
+    #
+    # Aceita duas formas do "sub", porque o deploy.yml declara "environment:"
+    # nos jobs -- isso muda o token OIDC do GitHub de
+    # "repo:OWNER/REPO:ref:refs/heads/BRANCH" para
+    # "repo:OWNER/REPO:environment:NOME". Ver docs do GitHub sobre OIDC.
     template = _template()
     roles = template.find_resources(
         "AWS::IAM::Role",
@@ -109,7 +114,10 @@ def test_github_deploy_role_is_scoped_to_this_repo_and_main_branch():
     assert len(roles) == 1
     role = next(iter(roles.values()))
     statement = role["Properties"]["AssumeRolePolicyDocument"]["Statement"][0]
-    sub_condition = statement["Condition"]["StringLike"]["token.actions.githubusercontent.com:sub"]
-    assert sub_condition.startswith("repo:")
-    assert sub_condition != "repo:*"
-    assert ":ref:refs/heads/main" in sub_condition
+    sub_conditions = statement["Condition"]["StringLike"]["token.actions.githubusercontent.com:sub"]
+    assert isinstance(sub_conditions, list)
+    for sub_condition in sub_conditions:
+        assert sub_condition.startswith("repo:")
+        assert sub_condition != "repo:*"
+    assert any(":ref:refs/heads/main" in c for c in sub_conditions)
+    assert any(":environment:" in c for c in sub_conditions)

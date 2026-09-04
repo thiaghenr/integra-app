@@ -152,7 +152,15 @@ class IntegraStack(Stack):
                         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                     },
                     "StringLike": {
-                        "token.actions.githubusercontent.com:sub": f"repo:{GITHUB_REPO}:ref:refs/heads/main",
+                        # O job no deploy.yml declara "environment: dev/staging/prod", o que muda o
+                        # formato do "sub" do token OIDC de "repo:OWNER/REPO:ref:refs/heads/BRANCH"
+                        # para "repo:OWNER/REPO:environment:NOME" (ver docs do GitHub sobre OIDC).
+                        # Aceita os dois formatos -- environment (o que de fato acontece hoje) e
+                        # ref/main (caso algum job futuro rode sem "environment:").
+                        "token.actions.githubusercontent.com:sub": [
+                            f"repo:{GITHUB_REPO}:ref:refs/heads/main",
+                            f"repo:{GITHUB_REPO}:environment:*",
+                        ],
                     },
                 },
             ),
