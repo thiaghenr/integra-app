@@ -42,8 +42,8 @@ from constructs import Construct
 # - GITHUB_REPO: "owner/repo" exato deste repositorio no GitHub (usado pra
 #   restringir quem pode assumir a role de deploy via OIDC)
 # - HOSTED_ZONE_ID: id do hosted zone Route 53 ja existente (ex.: Z0123456789ABCDEFGHI)
-GITHUB_REPO = "REPLACE_ME/integra-app"
-HOSTED_ZONE_ID = "REPLACE_ME"
+GITHUB_REPO = "thiaghenr/integra-app"
+HOSTED_ZONE_ID = "Z00658691ZOQWYAUAOIMY"
 
 
 @dataclass
@@ -114,10 +114,10 @@ class IntegraStack(Stack):
         # Somente dev ativo por enquanto. Prod comentado ate ser reativado --
         # reaproveita o mesmo metodo, so descomentar quando for a hora.
         self._build_environment(
-            EnvConfig(name="dev", domain="dev.integra.example.com", desired_count=1, cpu=256, memory=512)
+            EnvConfig(name="dev", domain="dev.projetosei.com.br", desired_count=1, cpu=256, memory=512)
         )
         # self._build_environment(
-        #     EnvConfig(name="prod", domain="app.integra.example.com", desired_count=2, cpu=512, memory=1024)
+        #     EnvConfig(name="prod", domain="projetosei.com.br", desired_count=2, cpu=512, memory=1024)
         # )
 
         self._build_github_deploy_role()
@@ -300,4 +300,8 @@ class IntegraStack(Stack):
         # grant_read faz o mesmo que a Policy inline no CFN, so que sem
         # escrever o ARN na mao
         app_secret.grant_read(task_definition.execution_role)
+        # database.secret e tipado como ISecret | None pela lib do CDK (so e
+        # None se as credenciais nao vierem do Secrets Manager) -- aqui
+        # sempre vem, via Credentials.from_generated_secret() acima.
+        assert database.secret is not None
         database.secret.grant_read(task_definition.execution_role)
