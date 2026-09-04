@@ -44,6 +44,7 @@ from constructs import Construct
 # - HOSTED_ZONE_ID: id do hosted zone Route 53 ja existente (ex.: Z0123456789ABCDEFGHI)
 GITHUB_REPO = "thiaghenr/integra-app"
 HOSTED_ZONE_ID = "Z00658691ZOQWYAUAOIMY"
+_github_owner, _github_repo_name = GITHUB_REPO.split("/", 1)
 
 
 @dataclass
@@ -152,14 +153,17 @@ class IntegraStack(Stack):
                         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                     },
                     "StringLike": {
-                        # O job no deploy.yml declara "environment: dev/staging/prod", o que muda o
-                        # formato do "sub" do token OIDC de "repo:OWNER/REPO:ref:refs/heads/BRANCH"
-                        # para "repo:OWNER/REPO:environment:NOME" (ver docs do GitHub sobre OIDC).
-                        # Aceita os dois formatos -- environment (o que de fato acontece hoje) e
-                        # ref/main (caso algum job futuro rode sem "environment:").
+                        # O sub real do token OIDC (confirmado via debug direto no workflow) e:
+                        #   repo:thiaghenr@21361452/integra-app@1322151160:environment:dev
+                        # Duas coisas mudam o formato "classico" repo:OWNER/REPO:ref:refs/heads/BRANCH:
+                        # 1) o job declara "environment:", o que troca o sufixo pra
+                        #    "environment:NOME" em vez de "ref:refs/heads/BRANCH";
+                        # 2) o GitHub agora inclui o ID numerico imutavel de conta/repo junto do
+                        #    nome ("owner@owner_id/repo@repo_id"), protecao contra reuso de nome
+                        #    apos rename -- por isso o "@*" entre nome e "/"/":' abaixo.
                         "token.actions.githubusercontent.com:sub": [
-                            f"repo:{GITHUB_REPO}:ref:refs/heads/main",
-                            f"repo:{GITHUB_REPO}:environment:*",
+                            f"repo:{_github_owner}@*/{_github_repo_name}@*:ref:refs/heads/main",
+                            f"repo:{_github_owner}@*/{_github_repo_name}@*:environment:*",
                         ],
                     },
                 },

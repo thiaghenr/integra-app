@@ -37,17 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # TEMPORARIO -- so pra diagnosticar o erro "Not authorized to perform
-      # sts:AssumeRoleWithWebIdentity". Imprime o "sub" real que o GitHub
-      # esta mandando no token OIDC, pra comparar letra por letra com a
-      # condicao StringLike configurada em infra/cdk/integra_stack.py.
-      # Remover esse passo depois que o deploy voltar a funcionar.
-      - name: "DEBUG: decode OIDC token sub claim"
-        run: |
-          curl -sS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" \
-            | jq -r '.value' | cut -d '.' -f2 | base64 -d 2>/dev/null | jq .
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
