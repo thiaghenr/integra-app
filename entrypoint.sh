@@ -9,6 +9,14 @@ if [ -z "$DATABASE_URL" ] && [ -n "$POSTGRES_HOST" ]; then
   export DATABASE_URL="postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
 fi
 
+# Se um comando explicito for passado (ex.: override de task do ECS pra
+# rodar "alembic stamp X" manualmente), roda ele em vez do fluxo padrao --
+# usado so pra diagnostico/correcao manual do estado do banco. Sem args
+# (caso normal do service), segue o fluxo de sempre.
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 echo "Running database migrations..."
 alembic upgrade head
 
